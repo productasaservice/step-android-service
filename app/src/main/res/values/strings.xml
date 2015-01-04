@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">STEP</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_google_map">GoogleMapActivity</string>
+    <string name="title_activity_splash">SplashActivity</string>
+    <string name="drawing_enabled">Drawing enabled</string>
+    <string name="drawing_disabled">Drawing disabled</string>
+
+</resources>

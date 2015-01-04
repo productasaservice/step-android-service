@@ -1,0 +1,48 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.android.step.GoogleMapActivity">
+
+
+    <com.google.android.gms.maps.MapView
+        android:id="@+id/drawing_mapView"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:clickable="true" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:background="@android:color/white">
+        <ImageView
+            android:id="@+id/start_drawingIv"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:background="@drawable/ic_step_off" />
+    </LinearLayout>
+    
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_alignParentTop="true"
+        android:background="@color/actionbar_divider"/>
+
+    <RelativeLayout
+        android:id="@+id/drawing_progressRl"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/white">
+
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            style="?android:attr/android:progressBarStyleSmall"/>
+    </RelativeLayout>
+
+</RelativeLayout>
