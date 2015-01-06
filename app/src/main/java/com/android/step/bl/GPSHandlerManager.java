@@ -31,7 +31,7 @@ public class GPSHandlerManager implements
     /**
      * The desired interval for location updates. Inexact. Updates may be more or less frequent.
      */
-    public static final long UPDATE_INTERVAL_IN_MILLISECONDS = 10000;
+    public static final long UPDATE_INTERVAL_IN_MILLISECONDS = 1500;
 
     /**
      * The fastest rate for active location updates. Exact. Updates will never be more frequent
@@ -39,6 +39,9 @@ public class GPSHandlerManager implements
      */
     public static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
             UPDATE_INTERVAL_IN_MILLISECONDS / 2;
+
+
+    public static final int UPDATE_DISPLACEMENT_IN_METERS = 5;
 
     // Keys for storing activity state in the Bundle.
     protected final static String REQUESTING_LOCATION_UPDATES_KEY = "requesting-location-updates-key";
@@ -128,7 +131,7 @@ public class GPSHandlerManager implements
         // you may receive them slower than requested. You may also receive updates faster than
         // requested if other applications are requesting location at a faster interval.
         mLocationRequest.setInterval(UPDATE_INTERVAL_IN_MILLISECONDS);
-
+        mLocationRequest.setSmallestDisplacement(UPDATE_DISPLACEMENT_IN_METERS);
         // Sets the fastest rate for active location updates. This interval is exact, and your
         // application will never receive updates faster than this value.
         mLocationRequest.setFastestInterval(FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS);
