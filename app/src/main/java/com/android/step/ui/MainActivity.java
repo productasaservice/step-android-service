@@ -1,12 +1,16 @@
 package com.android.step.ui;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.afollestad.materialdialogs.MaterialDialog;
+import com.afollestad.materialdialogs.MaterialDialogCompat;
 import com.android.step.R;
+import com.android.step.bl.NotificationManager;
 import com.android.step.ui.GoogleMapFragment;
 
 
@@ -44,4 +48,28 @@ public class MainActivity extends ActionBarActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+    @Override
+    public void onBackPressed() {
+        MaterialDialogCompat.Builder dialogBuilder = new MaterialDialogCompat.Builder(this);
+        dialogBuilder.setTitle("Exit");
+        dialogBuilder.setMessage("Are you sure want to exit?");
+        dialogBuilder.setPositiveButton("Exit", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                MainActivity.super.onBackPressed();
+                NotificationManager.getInstance().hideNotification();
+            }
+        });
+        dialogBuilder.setNegativeButton("Cancel",new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                return;
+            }
+        });
+
+        dialogBuilder.show();
+    }
+
+
 }

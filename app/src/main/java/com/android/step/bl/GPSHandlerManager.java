@@ -31,7 +31,7 @@ public class GPSHandlerManager implements
     /**
      * The desired interval for location updates. Inexact. Updates may be more or less frequent.
      */
-    public static final long UPDATE_INTERVAL_IN_MILLISECONDS = 1500;
+    public static final long UPDATE_INTERVAL_IN_MILLISECONDS = 1000;
 
     /**
      * The fastest rate for active location updates. Exact. Updates will never be more frequent
@@ -41,7 +41,7 @@ public class GPSHandlerManager implements
             UPDATE_INTERVAL_IN_MILLISECONDS / 2;
 
 
-    public static final int UPDATE_DISPLACEMENT_IN_METERS = 5;
+    public static final int UPDATE_DISPLACEMENT_IN_METERS = 3;
 
     // Keys for storing activity state in the Bundle.
     protected final static String REQUESTING_LOCATION_UPDATES_KEY = "requesting-location-updates-key";
@@ -232,8 +232,6 @@ public class GPSHandlerManager implements
     public void onLocationChanged(Location location) {
         mCurrentLocation = location;
         mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
-
-        Log.d("test--","loc: " + location.getLatitude() + " | " + location.getLongitude());
 
         if (mLocationListener != null) {
             mLocationListener.onLocationChanged(location);

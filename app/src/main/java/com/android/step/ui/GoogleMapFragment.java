@@ -1,10 +1,12 @@
 package com.android.step.ui;
 
 import android.app.Activity;
+import android.graphics.Point;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.SystemClock;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -12,6 +14,8 @@ import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Interpolator;
+import android.view.animation.LinearInterpolator;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -19,6 +23,7 @@ import android.widget.Toast;
 
 import com.android.step.R;
 import com.android.step.bl.GPSHandlerManager;
+import com.android.step.bl.NotificationManager;
 import com.android.step.util.MarkerImageBuilder;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.CameraUpdate;
@@ -26,6 +31,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
+import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.GroundOverlayOptions;
@@ -52,8 +58,10 @@ public class GoogleMapFragment extends Fragment {
     private GPSHandlerManager mGpsPositionHandler;
     private ImageView mStartDrawingIv;
     private RelativeLayout mProgressRl;
+    private NotificationManager mNotification;
 
     private boolean mIsDrawingEnabled = false;
+    private boolean mIsNotificationIsVisible = false;
 
     List<Location> stepPoints;
     Location mLocation;
@@ -81,6 +89,8 @@ public class GoogleMapFragment extends Fragment {
         mMapView = ((MapView) view.findViewById(R.id.drawing_mapView));
         mMapView.onCreate(savedInstanceState);
 
+        mNotification = NotificationManager.getInstance();
+
         stepPoints = new ArrayList<>();
 
         mStartDrawingIv.setOnClickListener(new View.OnClickListener() {
@@ -90,13 +100,13 @@ public class GoogleMapFragment extends Fragment {
                     mStartDrawingIv.setBackgroundDrawable(getResources().getDrawable(R.drawable.ic_step_off));
                     mIsDrawingEnabled = false;
                     mGpsPositionHandler.stopUpdates();
-                    Toast.makeText(getActivity(),R.string.drawing_disabled,Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), R.string.drawing_disabled, Toast.LENGTH_SHORT).show();
                 } else {
                     mStartDrawingIv.setBackgroundDrawable(getResources().getDrawable(R.drawable.ic_step_on));
                     mIsDrawingEnabled = true;
                     mGpsPositionHandler.startUpdates();
                     addStepMark(mGpsPositionHandler.getCurrentLocation());
-                    Toast.makeText(getActivity(),R.string.drawing_enabled,Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), R.string.drawing_enabled, Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -178,10 +188,13 @@ public class GoogleMapFragment extends Fragment {
         });
     }
 
+
+
     @Override
     public void onStart() {
         super.onStart();
         mGpsPositionHandler.onStart();
+        Log.d("test--", "start update");
     }
 
     @Override
@@ -191,6 +204,11 @@ public class GoogleMapFragment extends Fragment {
         }
         super.onResume();
         mGpsPositionHandler.onResume();
+        Log.d("test--","resume update");
+        if (mIsNotificationIsVisible) {
+            mNotification.hideNotification();
+            mIsNotificationIsVisible = false;
+        }
     }
 
     @Override
@@ -199,17 +217,33 @@ public class GoogleMapFragment extends Fragment {
             mMapView.onPause();
         }
         super.onPause();
-        mGpsPositionHandler.onPause();
+        if (!mIsDrawingEnabled) {
+            mGpsPositionHandler.onPause();
+        }
+        Log.d("test--","pause update");
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        mGpsPositionHandler.onStop();
+        if (!mIsDrawingEnabled) {
+            mGpsPositionHandler.onStop();
+        } else if (mIsDrawingEnabled && !mIsNotificationIsVisible) {
+            mNotification.showNotification("Step","Tap here to view your steps!",R.drawable.ic_notification);
+            mIsNotificationIsVisible = true;
+        }
+
+        Log.d("test--","stop update");
     }
 
     @Override
     public void onDestroy() {
+        mGpsPositionHandler.onStop();
+        if (mIsNotificationIsVisible) {
+            mNotification.hideNotification();
+            mIsNotificationIsVisible = false;
+        }
+
         if (mMapView != null) {
             mMapView.onDestroy();
         }
@@ -241,6 +275,7 @@ public class GoogleMapFragment extends Fragment {
         mMap.addMarker(new MarkerOptions()
                 .icon(new MarkerImageBuilder(getResources()).asPrimary(false).withColor(getResources().getColor(R.color.marker_green)).build())
                 .position(new LatLng(location.getLatitude(),location.getLongitude())));
+        //animateAddMarker(location,step_mark);
     }
 
     /**
@@ -308,5 +343,35 @@ public class GoogleMapFragment extends Fragment {
                 }
             }
         }, 300);
+    }
+
+    private void animateAddMarker(Location point, final Marker marker){
+        final long duration = 400;
+        final Handler handler = new Handler();
+        final long start = SystemClock.uptimeMillis();
+        final LatLng target = new LatLng(point.getLatitude(),point.getLongitude());
+        Projection proj = mMap.getProjection();
+
+        Point startPoint = proj.toScreenLocation(target);
+        startPoint.y = 0;
+        final LatLng startLatLng = proj.fromScreenLocation(startPoint);
+
+        final Interpolator interpolator = new LinearInterpolator();
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                long elapsed = SystemClock.uptimeMillis() - start;
+                float t = interpolator.getInterpolation((float) elapsed / duration);
+                double lng = t * target.longitude + (1 - t) * startLatLng.longitude;
+                double lat = t * target.latitude + (1 - t) * startLatLng.latitude;
+                marker.setPosition(new LatLng(lat, lng));
+                if (t < 1.0) {
+                    // Post again 10ms later.
+                    handler.postDelayed(this, 10);
+                } else {
+                    // animation ended
+                }
+            }
+        });
     }
 }
