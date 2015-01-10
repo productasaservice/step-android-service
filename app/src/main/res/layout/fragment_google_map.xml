@@ -1,7 +1,10 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:materialdesign="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/google_map_rootRl"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@android:color/white"
     tools:context="com.android.step.GoogleMapActivity">
 
 
@@ -12,25 +15,12 @@
         android:clickable="true" />
 
     <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:background="@android:color/white">
-        <ImageView
-            android:id="@+id/start_drawingIv"
-            android:layout_width="70dp"
-            android:layout_height="70dp"
-            android:background="@drawable/ic_step_off" />
-    </LinearLayout>
-    
-    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="1dp"
+        android:layout_alignParentTop="true"
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp"
-        android:layout_alignParentTop="true"
-        android:background="@color/actionbar_divider"/>
+        android:background="@color/actionbar_divider" />
 
     <RelativeLayout
         android:id="@+id/drawing_progressRl"
@@ -41,16 +31,47 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="1dp"
+            android:layout_alignParentTop="true"
             android:layout_marginLeft="10dp"
             android:layout_marginRight="10dp"
-            android:layout_alignParentTop="true"
-            android:background="@color/actionbar_divider"/>
+            android:background="@color/actionbar_divider" />
 
-        <ProgressBar
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+        <com.gc.materialdesign.views.ProgressBarCircularIndeterminate
+            android:id="@+id/progressBarCircularIndetermininate"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:layout_centerInParent="true"
-            style="?android:attr/android:progressBarStyleSmall"/>
+            android:background="#FF9900" />
     </RelativeLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:layout_alignParentBottom="true"
+        android:background="@android:color/white">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_alignParentTop="true"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:background="@color/actionbar_divider" />
+
+    </LinearLayout>
+
+    <com.gc.materialdesign.views.ButtonFloat
+        android:id="@+id/buttonFloat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginBottom="10dp"
+        android:layout_marginRight="24dp"
+        android:background="#4E75C8"
+        materialdesign:animate="false"
+        materialdesign:iconDrawable="@drawable/ic_draw_my_step" />
+
 
 </RelativeLayout>

@@ -9,4 +9,13 @@
     <string name="drawing_enabled">Drawing enabled</string>
     <string name="drawing_disabled">Drawing disabled</string>
 
+    <!--notification text-->
+    <string name="notification_title">Step</string>
+    <string name="notification_text">Tap here to view your steps!</string>
+
+    <!--dialog text-->
+    <string name="exit_dialog_title">Exit</string>
+    <string name="exit_dialog_text">Are you sure want to exit?</string>
+    <string name="dialog_cancel">Cancel</string>
+
 </resources>

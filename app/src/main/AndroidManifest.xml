@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.android.step"
+    package="com.discover.step"
     android:installLocation="auto" >
 
     <permission
-        android:name="com.android.step.MAPS_RECEIVE"
+        android:name="com.discover.step.MAPS_RECEIVE"
         android:protectionLevel="signature" />
 
-    <uses-permission android:name="com.android.step.MAPS_RECEIVE" />
+    <uses-permission android:name="com.discover.step.MAPS_RECEIVE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -21,20 +21,20 @@
         android:required="true" />
 
     <application
-        android:name=".StepApplication"
+        android:name="com.discover.step.StepApplication"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name=".ui.MainActivity"
+            android:name="com.discover.step.ui.MainActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait" >
         </activity>
 
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
-            android:value="AIzaSyDSrHxhLA-eq-Yy4DRTRAga7_Ph3tzL-jk" />
+            android:value="AIzaSyAqbFtdqPmtLe4wOMwqTJ8HCeZ5m0dZQi4" />
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
@@ -42,7 +42,7 @@
         <uses-library android:name="com.google.android.maps" />
 
         <activity
-            android:name=".ui.SplashActivity"
+            android:name="com.discover.step.ui.SplashActivity"
             android:theme="@style/NoTitleActionbarStyle" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
