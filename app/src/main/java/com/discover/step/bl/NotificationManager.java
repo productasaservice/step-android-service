@@ -16,6 +16,7 @@ public class NotificationManager {
 
     private static android.app.NotificationManager mNotificationManager;
     private static final int mNotificationID = 2139;
+    private boolean isEnabled = true;
 
     private String mNotificationHint, mNotificationDescription;
     private int mNotificationResId;
@@ -37,6 +38,10 @@ public class NotificationManager {
     }
 
     public void showNotification(String hint, String description, int iconResId) {
+        if (!isEnabled) {
+            return;
+        }
+
         this.mNotificationHint = hint;
         this.mNotificationDescription = description;
         mNotificationResId = iconResId;
@@ -59,5 +64,13 @@ public class NotificationManager {
             mNotificationManager.cancel(mNotificationID);
             isVisible = false;
         }
+    }
+
+    public void setEnabled(boolean isEnabled) {
+        this.isEnabled = isEnabled;
+    }
+
+    public boolean isEnabled() {
+        return isEnabled;
     }
 }

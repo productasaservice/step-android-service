@@ -61,10 +61,12 @@ public class GoogleMapFragment extends Fragment {
     private boolean mIsNotificationIsVisible = false;
     private boolean mIsAppInBackground = false;
 
-    Location lastStepPoint;
+    //Store missing locations.
     List<Location> missingStepPoints;
+    List<Location> unDrewStepPoints;
 
-    Location mLocation;
+    Location lastStepPoint;
+    Location currentLocation;
 
     private LatLngBounds BOUNDS;
     private final int MAX_ZOOM = 18;
@@ -77,6 +79,7 @@ public class GoogleMapFragment extends Fragment {
         super.onAttach(activity);
         mActivity = (MainActivity) activity;
         mGpsPositionHandler = GPSHandlerManager.getInstance();
+        NotificationManager.getInstance().setEnabled(true);
     }
 
     @Override
@@ -93,23 +96,25 @@ public class GoogleMapFragment extends Fragment {
         mNotification = NotificationManager.getInstance();
 
         missingStepPoints = new ArrayList<>();
+        unDrewStepPoints = new ArrayList<>();
 
         mStartDrawingBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (mIsDrawingEnabled) {
                     mIsDrawingEnabled = false;
-                    mGpsPositionHandler.stopUpdates();
+                    //mGpsPositionHandler.stopUpdates();
                     Toast.makeText(getActivity(), R.string.drawing_disabled, Toast.LENGTH_SHORT).show();
                 } else {
                     mIsDrawingEnabled = true;
-                    mGpsPositionHandler.startUpdates();
-                    addStepMark(mGpsPositionHandler.getCurrentLocation());
+                    //mGpsPositionHandler.startUpdates();
+                    //addStepMark(mGpsPositionHandler.getCurrentLocation());
                     Toast.makeText(getActivity(), R.string.drawing_enabled, Toast.LENGTH_SHORT).show();
-                    animateMainMarker();
                 }
             }
         });
+
+        Log.d("test--", "create view...");
 
         initMap();
 
@@ -123,12 +128,14 @@ public class GoogleMapFragment extends Fragment {
         mMapView.postDelayed(new Runnable() {
             @Override
             public void run() {
-                Location location = GPSHandlerManager.getInstance().getCurrentLocation();
-                //Location location = mLocation;
+                Location location = mGpsPositionHandler.getCurrentLocation();
+
                 if (location == null) {
                     mMapView.postDelayed(this,1000);
                     return;
                 }
+
+                Log.d("test--","Location: " + location.getLatitude() + " Longitude: " + location.getLongitude());
 
                 final LatLng current_location = new LatLng(location.getLatitude(),location.getLongitude());
                 GroundOverlayOptions newarkMap = new GroundOverlayOptions().image(BitmapDescriptorFactory.fromResource(R.drawable.ground_overlay)).position(current_location,8600000f,8600000f);
@@ -156,8 +163,8 @@ public class GoogleMapFragment extends Fragment {
                         if (cameraPosition.zoom != currentZoom) {
                             currentZoom = cameraPosition.zoom;
                             if (currentZoom < MIN_ZOOM) {
-                                mLocation = mGpsPositionHandler.getCurrentLocation();
-                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLocation.getLatitude(),mLocation.getLongitude()), MIN_ZOOM));
+                                currentLocation = mGpsPositionHandler.getCurrentLocation();
+                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), MIN_ZOOM));
                                 currentZoom = MIN_ZOOM;
                             }
                         }
@@ -171,8 +178,13 @@ public class GoogleMapFragment extends Fragment {
                     public void run() {
                         mProgressRl.setVisibility(View.GONE);
                         mStartDrawingBt.setVisibility(View.VISIBLE);
+                        animateMainMarker();
                     }
                 }, 500);
+
+
+                //init last step location.
+                lastStepPoint = location;
             }
         },1000);
 
@@ -180,16 +192,16 @@ public class GoogleMapFragment extends Fragment {
         mGpsPositionHandler.setOnLocationChangeListener(new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-                if (location != null && mLocation != null && mLocation.getLatitude() != location.getLatitude() && mLocation.getLongitude() != location.getLongitude()) {
+                if (location != null && currentLocation != null && currentLocation.getLatitude() != location.getLatitude() && currentLocation.getLongitude() != location.getLongitude()) {
                         if (!mIsAppInBackground && mainMarker != null) {
                             mainMarker.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
                         }
 
-                        if (lastStepPoint != null && distanceFromLastPoint(location) >= 5 && mIsDrawingEnabled) {
+                        if (lastStepPoint != null && distanceFromLastPoint(location) >= 5) {
                             addStepMark(mGpsPositionHandler.getCurrentLocation());
                         }
                     }
-                    mLocation = location;
+                    currentLocation = location;
                 }
         });
     }
@@ -223,17 +235,19 @@ public class GoogleMapFragment extends Fragment {
             mMapView.onPause();
         }
         super.onPause();
-        if (!mIsDrawingEnabled) {
-            mGpsPositionHandler.onPause();
-        }
+//        if (!mIsDrawingEnabled) {
+//            mGpsPositionHandler.onPause();
+//        }
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        if (!mIsDrawingEnabled) {
-            mGpsPositionHandler.onStop();
-        } else if (mIsDrawingEnabled && !mIsNotificationIsVisible) {
+//        if (!mIsDrawingEnabled) {
+//            mGpsPositionHandler.onStop();
+//        } else
+
+        if (!mIsNotificationIsVisible && mNotification.isEnabled()) {
             mNotification.showNotification(getString(R.string.notification_title),getString(R.string.notification_text),R.drawable.ic_step_notification);
             mIsNotificationIsVisible = true;
         }
@@ -247,7 +261,6 @@ public class GoogleMapFragment extends Fragment {
         if (mIsNotificationIsVisible) {
             mNotification.hideNotification();
             mIsNotificationIsVisible = false;
-
         }
 
         if (mMapView != null) {
@@ -289,11 +302,21 @@ public class GoogleMapFragment extends Fragment {
         lastStepPoint = location;
         if (!mIsAppInBackground) {
             mMap.addMarker(new MarkerOptions()
-                    .icon(new MarkerImageBuilder(getResources()).asPrimary(false).withColor(getResources().getColor(R.color.marker_green)).build())
+                    .icon(new MarkerImageBuilder(getResources()).asPrimary(false).build())
                     .position(new LatLng(location.getLatitude(), location.getLongitude())));
+
+            if (mIsDrawingEnabled) {
+                mMap.addMarker(new MarkerOptions()
+                        .icon(new MarkerImageBuilder(getResources()).asPrimary(false).withSecondaryRes(R.drawable.main_marker_2).build())
+                        .position(new LatLng(location.getLatitude(), location.getLongitude())));
+            }
         } else {
             //if the app goes to background we store the new points and not draw to mapView.
             missingStepPoints.add(location);
+
+            if (mIsDrawingEnabled) {
+                unDrewStepPoints.add(location);
+            }
         }
     }
 
@@ -308,7 +331,7 @@ public class GoogleMapFragment extends Fragment {
 
             for (Location loc : missingStepPoints) {
                 mMap.addMarker(new MarkerOptions()
-                        .icon(new MarkerImageBuilder(getResources()).asPrimary(false).withColor(getResources().getColor(R.color.marker_green)).build())
+                        .icon(new MarkerImageBuilder(getResources()).asPrimary(false).build())
                         .position(new LatLng(loc.getLatitude(), loc.getLongitude())));
             }
 
@@ -373,7 +396,7 @@ public class GoogleMapFragment extends Fragment {
             @Override
             public void run() {
                 if (isVisible()) {
-                    if (mIsDrawingEnabled) {
+                    LatLng curr_loc = mainMarker.getPosition();
                         if (isPrimary) {
                             mainMarker.setIcon(new MarkerImageBuilder(getResources()).asPrimary(true).withMainRes(R.drawable.main_marker).build());
                             isPrimary = false;
@@ -381,10 +404,9 @@ public class GoogleMapFragment extends Fragment {
                             mainMarker.setIcon(new MarkerImageBuilder(getResources()).asPrimary(true).withMainRes(R.drawable.main_marker_2).build());
                             isPrimary = true;
                         }
-                        new Handler().postDelayed(this, 300);
-                    } else {
-                        mainMarker.setIcon(new MarkerImageBuilder(getResources()).asPrimary(true).build());
-                    }
+
+                    mainMarker.setPosition(curr_loc);
+                    new Handler().postDelayed(this, 300);
                 }
             }
         }, 300);

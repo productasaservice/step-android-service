@@ -87,7 +87,7 @@ public class GPSHandlerManager implements
     }
 
     private GPSHandlerManager() {
-        mRequestingLocationUpdates = false;
+        mRequestingLocationUpdates = true;
         mLastUpdateTime = "";
         // Kick off the process of building a GoogleApiClient and requesting the LocationServices
         // API.

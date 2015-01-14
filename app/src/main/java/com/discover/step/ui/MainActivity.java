@@ -1,6 +1,9 @@
 package com.discover.step.ui;
 
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
@@ -14,6 +17,8 @@ import com.discover.step.bl.NotificationManager;
 
 public class MainActivity extends ActionBarActivity {
 
+    private static final int GPS_REQUEST_CODE = 695;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -21,8 +26,39 @@ public class MainActivity extends ActionBarActivity {
 
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.map_layoutFl, new GoogleMapFragment()).commit();
+
+        initActionBar();
+
+        final LocationManager manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE );
+
+        if ( !manager.isProviderEnabled( LocationManager.GPS_PROVIDER ) ) {
+            buildAlertMessageNoGps();
+        }
+    }
+
+    private void initActionBar() {
         getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_HOME);
         getSupportActionBar().setIcon(R.drawable.ic_title);
+    }
+
+    private void buildAlertMessageNoGps() {
+        MaterialDialogCompat.Builder dialogBuilder = new MaterialDialogCompat.Builder(this);
+        dialogBuilder.setTitle(R.string.no_gps_title);
+        dialogBuilder.setMessage(R.string.no_gps_message);
+        dialogBuilder.setPositiveButton(R.string.no_gps_positive, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                startActivityForResult(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS),GPS_REQUEST_CODE);
+            }
+        });
+        dialogBuilder.setNegativeButton(R.string.no_gps_cancel,new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                MainActivity.super.onBackPressed();
+            }
+        });
+
+        dialogBuilder.show();
     }
 
     @Override
@@ -55,6 +91,7 @@ public class MainActivity extends ActionBarActivity {
         dialogBuilder.setPositiveButton(R.string.exit_dialog_title, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                NotificationManager.getInstance().setEnabled(false);
                 MainActivity.super.onBackPressed();
                 NotificationManager.getInstance().hideNotification();
             }

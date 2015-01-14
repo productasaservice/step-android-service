@@ -3,4 +3,6 @@
     <color name="marker_green">#38761D</color>
     <color name="actionbar_color">#FFFFFF</color>
     <color name="actionbar_divider">#808080</color>
+    <color name="main_marker_color">#FF9900</color>
+    <color name="main_marker_color_with_alpha">#99FF9900</color>
 </resources>

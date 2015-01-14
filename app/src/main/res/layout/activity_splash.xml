@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="centerCrop"
-        android:background="@drawable/img_splash_bg"
+        android:background="@drawable/step_beta_splash"
         android:layout_centerInParent="true"/>
 
     <com.gc.materialdesign.views.ProgressBarIndeterminate
@@ -18,6 +18,6 @@
         android:layout_width="fill_parent"
         android:layout_height="10dp"
         android:layout_alignParentBottom="true"
-        android:background="#FF9900" />
+        android:background="#5B9BD5" />
 
 </RelativeLayout>

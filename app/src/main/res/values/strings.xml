@@ -17,5 +17,9 @@
     <string name="exit_dialog_title">Exit</string>
     <string name="exit_dialog_text">Are you sure want to exit?</string>
     <string name="dialog_cancel">Cancel</string>
+    <string name="no_gps_message">You need GPS location update to use whole functionality, do you want to enable it?</string>
+    <string name="no_gps_title">No GPS Connection</string>
+    <string name="no_gps_positive">Enable</string>
+    <string name="no_gps_cancel">Exit</string>
 
 </resources>

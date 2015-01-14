@@ -69,8 +69,6 @@ public class MarkerImageBuilder {
     }
 
     private Bitmap buildBitmap() {
-
-        //Transparent layer. we wanna draw on it.
         Bitmap _pin = BitmapFactory.decodeResource(res, isPrimary ? main_res : secondary_res);
 
         return _pin;
