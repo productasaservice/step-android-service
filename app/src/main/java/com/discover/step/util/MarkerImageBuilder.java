@@ -20,17 +20,9 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
  */
 public class MarkerImageBuilder {
 
-    private static final int DEF_CIRCLE_IN_DP = 10;
-    private static final int DEF_RING_IN_DP = 150;
-
     private Resources res;
     private boolean isPrimary;
-    private int main_res;
-    private int secondary_res;
 
-    private int inner_circle_size;
-    private int external_circle_size;
-    private int bg_size;
     private int main_color;
 
     public MarkerImageBuilder asPrimary(boolean isPrimary) {
@@ -43,102 +35,101 @@ public class MarkerImageBuilder {
         return this;
     }
 
-    public MarkerImageBuilder withColor(int color) {
-        main_color = color;
-        return this;
-    }
-
-    public MarkerImageBuilder withMainRes(int res) {
-        main_res = res;
-        return this;
-    }
-
-    public MarkerImageBuilder withSecondaryRes(int res) {
-        secondary_res = res;
+    public MarkerImageBuilder withColor(int color_res) {
+        main_color = res.getColor(color_res);
         return this;
     }
 
     public MarkerImageBuilder(Resources res) {
         this.res = res;
         isPrimary = false;
-        main_res = R.drawable.main_marker;
-        secondary_res = R.drawable.secondary_marker;
-        inner_circle_size = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,DEF_CIRCLE_IN_DP, StepApplication.getContext().getResources().getDisplayMetrics());
-        external_circle_size = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,DEF_RING_IN_DP, StepApplication.getContext().getResources().getDisplayMetrics());
-        bg_size = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,250, StepApplication.getContext().getResources().getDisplayMetrics());
+        main_color = res.getColor(R.color.main_marker_color);
     }
 
     private Bitmap buildBitmap() {
-        Bitmap _pin = BitmapFactory.decodeResource(res, isPrimary ? main_res : secondary_res);
-
-        return _pin;
+        return drawMarker();
     }
 
     public BitmapDescriptor build() {
         return BitmapDescriptorFactory.fromBitmap(buildBitmap());
     }
 
-//    public Bitmap buildBitmap() {
-//        //Transparent layer. we wanna draw on it.
-//        //Bitmap _transparent_bg = BitmapFactory.decodeResource(res, R.drawable.marker_transparent_bg_c);
-////        Bitmap _circle = Bitmap.createBitmap(inner_circle_size,inner_circle_size, Bitmap.Config.ARGB_8888);
-////        Bitmap _output = Bitmap.createBitmap(bg_size,bg_size, Bitmap.Config.ARGB_8888);
-////
-////        Canvas external_circle = new Canvas(_circle);
-////        Paint circle_paint = new Paint();
-////        circle_paint.setColor(main_color);
-////        circle_paint.setStyle(Paint.Style.STROKE);
-////        circle_paint.setStrokeWidth(4f);
-////
-////        Log.d("test--","trans: " + bg_size + " _circle: " + inner_circle_size);
-////
-////        Canvas canvas = new Canvas(_output);
-////        final Paint paint = new Paint();
-////        final Rect rect = new Rect(0, 0,bg_size,bg_size);
-////        canvas.drawBitmap(_transparent_bg, rect, rect, paint);
-////
-////        external_circle.drawCircle(external_circle_size / 2, external_circle_size / 2, external_circle_size / 2, circle_paint);
-////
-////        external_circle.setBitmap(_circle);
-////
-////        int left = (bg_size - external_circle_size) / 2;
-////        int top = (bg_size - external_circle_size) / 2;
-////        canvas.drawBitmap(_circle, left, top, null);
-////        return _output;
-//        return drawableToBitmap(res.getDrawable(R.drawable.marker_test));
-//    }
 
-    private Bitmap drawInnerCircle() {
-        Bitmap _circle = Bitmap.createBitmap(inner_circle_size,inner_circle_size, Bitmap.Config.ARGB_8888);
-        Canvas inner_circle = new Canvas(_circle);
-        Paint circle_paint = new Paint();
-        circle_paint.setColor(main_color);
-        inner_circle.drawCircle(inner_circle_size / 2, inner_circle_size / 2, inner_circle_size / 2, circle_paint);
+    private Bitmap drawMarker() {
+        int RING_RADIUS = 7;
+        int RING_WIDTH = 1;
+        int CORE_RADIUS = 5;
 
-        inner_circle.setBitmap(_circle);
+        //Draw a ring it will be the main bitmap to draw into.
+        Bitmap background = drawRing(RING_RADIUS, RING_WIDTH);
+        //Draw the ring's core circle.
+        Bitmap core = drawCircle(CORE_RADIUS);
+        //Set bitmap to mutable.
+        background = background.copy(background.getConfig(), true);
+        //Construct a canvas with the specified bitmap to draw into
+        Canvas canvas = new Canvas(background);
+        //Create a new paint with default settings.
+        Paint paint = new Paint();
+        //Put it together.
+        canvas.drawBitmap(core, (background.getWidth() - core.getWidth()) / 2, (background.getHeight() - core.getHeight()) / 2, paint);
 
-        return _circle;
+        return background;
     }
 
 
-    private Bitmap drawableToBitmap (Drawable drawable) {
-        if (drawable instanceof BitmapDrawable) {
-            return ((BitmapDrawable)drawable).getBitmap();
+    private Bitmap drawCircle(int radius) {
+        int SIZE = (int) DpConverterUtil.convertDpToPixel(100);
+        int RADIUS = (int) DpConverterUtil.convertDpToPixel(radius);
+        //Check that default size is enough
+        SIZE = SIZE < 2 * RADIUS ? 2 * RADIUS : SIZE;
+        // Create a mutable bitmap
+        Bitmap background = Bitmap.createBitmap(SIZE,SIZE,Bitmap.Config.ARGB_8888);
+        background = background.copy(background.getConfig(), true);
+        //Construct a canvas with the specified bitmap to draw into
+        Canvas canvas = new Canvas(background);
+        //Create a new paint with default settings.
+        Paint paint = new Paint();
+        //smooth out the edges of what is being drawn
+        paint.setAntiAlias(true);
+        //set color
+        paint.setColor(main_color);
+        //set style
+        paint.setStyle(Paint.Style.FILL);
+        //draw circle with radius 30
+        canvas.drawCircle(SIZE / 2, SIZE / 2, RADIUS, paint);
+
+        return background;
+    }
+
+    private Bitmap drawRing(int radius, int width) {
+        int SIZE = (int) DpConverterUtil.convertDpToPixel(width);
+        int RADIUS = (int) DpConverterUtil.convertDpToPixel(radius);
+        int LINE_WIDTH = (int) DpConverterUtil.convertDpToPixel(width);
+
+        //Check that default size is enough
+        SIZE = SIZE < 2 * RADIUS ? 2 * RADIUS + 2 * LINE_WIDTH : SIZE;
+        // Create a mutable bitmap
+        Bitmap background = Bitmap.createBitmap(SIZE,SIZE,Bitmap.Config.ARGB_8888);
+        background = background.copy(background.getConfig(), true);
+        //Construct a canvas with the specified bitmap to draw into
+        Canvas canvas = new Canvas(background);
+        //Create a new paint with default settings.
+        Paint paint = new Paint();
+        //smooth out the edges of what is being drawn
+        paint.setAntiAlias(true);
+        //set color
+        paint.setColor(isPrimary ? main_color : res.getColor(android.R.color.transparent));
+        //set style
+        paint.setStyle(Paint.Style.STROKE);
+        //set stroke
+        paint.setStrokeWidth(LINE_WIDTH);
+        //set alpha
+        if (isPrimary) {
+            paint.setAlpha(200);
         }
+        //draw circle with radius 30
+        canvas.drawCircle(SIZE / 2, SIZE / 2, RADIUS, paint);
 
-        int width = drawable.getIntrinsicWidth();
-        width = width > 0 ? width : 1;
-        int height = drawable.getIntrinsicHeight();
-        height = height > 0 ? height : 1;
-
-        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-        drawable.draw(canvas);
-
-        return bitmap;
+        return background;
     }
-
-
-    //private Bitmap draw
 }

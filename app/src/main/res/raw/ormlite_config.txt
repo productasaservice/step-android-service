@@ -1,0 +1,44 @@
+#
+# generated on 2015/01/18 06:33:39
+#
+# --table-start--
+dataClass=com.discover.step.model.StepPoint
+tableName=steppoint
+# --table-fields-start--
+# --field-start--
+fieldName=id
+generatedId=true
+# --field-end--
+# --field-start--
+fieldName=user_id
+# --field-end--
+# --field-start--
+fieldName=created_at
+# --field-end--
+# --field-start--
+fieldName=latitude
+# --field-end--
+# --field-start--
+fieldName=longitude
+# --field-end--
+# --field-start--
+fieldName=accuracy
+# --field-end--
+# --field-start--
+fieldName=bearing
+# --field-end--
+# --field-start--
+fieldName=speed
+# --field-end--
+# --field-start--
+fieldName=color
+# --field-end--
+# --field-start--
+fieldName=description
+# --field-end--
+# --field-start--
+fieldName=isDrawnPoint
+# --field-end--
+# --table-fields-end--
+# --table-end--
+#################################

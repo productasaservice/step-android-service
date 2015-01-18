@@ -5,4 +5,5 @@
     <color name="actionbar_divider">#808080</color>
     <color name="main_marker_color">#FF9900</color>
     <color name="main_marker_color_with_alpha">#99FF9900</color>
+    <color name="secondary_marker_color">#4E75C8</color>
 </resources>

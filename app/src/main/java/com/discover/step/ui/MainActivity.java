@@ -1,31 +1,45 @@
 package com.discover.step.ui;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import com.afollestad.materialdialogs.MaterialDialogCompat;
 import com.discover.step.R;
+import com.discover.step.async.GPSTrackerService;
 import com.discover.step.bl.NotificationManager;
+import com.discover.step.interfaces.IGpsLoggerServiceClient;
 
 
 public class MainActivity extends ActionBarActivity {
 
     private static final int GPS_REQUEST_CODE = 695;
+    private static final String TAG = "Main Activity";
+
+    private Fragment fragment;
+    private GPSTrackerService trackingService;
+    private Intent serviceIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        fragment = new GoogleMapFragment();
+
         getSupportFragmentManager().beginTransaction()
-                .replace(R.id.map_layoutFl, new GoogleMapFragment()).commit();
+                .replace(R.id.map_layoutFl, fragment).commit();
 
         initActionBar();
 
@@ -62,6 +76,12 @@ public class MainActivity extends ActionBarActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        startAndBindService();
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         //getMenuInflater().inflate(R.menu.menu_main, menu);
@@ -93,7 +113,7 @@ public class MainActivity extends ActionBarActivity {
             public void onClick(DialogInterface dialog, int which) {
                 NotificationManager.getInstance().setEnabled(false);
                 MainActivity.super.onBackPressed();
-                NotificationManager.getInstance().hideNotification();
+                stopAndUnbindServiceIfRequired();
             }
         });
         dialogBuilder.setNegativeButton(R.string.dialog_cancel,new DialogInterface.OnClickListener() {
@@ -106,5 +126,49 @@ public class MainActivity extends ActionBarActivity {
         dialogBuilder.show();
     }
 
+    /**
+     * Starts the service and binds the activity to it.
+     */
+    private void startAndBindService() {
+        serviceIntent = new Intent(this, GPSTrackerService.class);
+        serviceIntent.putExtra("immediatestart",true);
+        // Start the service in case it isn't already running
+        startService(serviceIntent);
+        // Now bind to service
+        bindService(serviceIntent, gpsServiceConnection, Context.BIND_AUTO_CREATE);
+    }
 
+    /**
+     * Stops the service if it isn't logging. Also unbinds.
+     */
+    private void stopAndUnbindServiceIfRequired() {
+        try {
+            serviceIntent = new Intent(this, GPSTrackerService.class);
+            serviceIntent.putExtra("immediatestop",true);
+            startService(serviceIntent);
+
+            unbindService(gpsServiceConnection);
+
+            stopService(serviceIntent);
+        } catch (Exception e) {
+            Log.d(TAG, "Could not unbind service", e);
+        }
+    }
+
+    /**
+     * Provides a connection to the GPS Logging Service
+     */
+    private final ServiceConnection gpsServiceConnection = new ServiceConnection() {
+
+        public void onServiceDisconnected(ComponentName name) {
+            Log.d(TAG,"Disconnected from GPSLoggingService from MainActivity");
+            trackingService = null;
+        }
+
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            Log.d(TAG, "Connected to GPSLoggingService from GoogleMapFragment");
+            trackingService = ((GPSTrackerService.GpsLoggingBinder) service).getService();
+            GPSTrackerService.setServiceClient((IGpsLoggerServiceClient)fragment);
+        }
+    };
 }

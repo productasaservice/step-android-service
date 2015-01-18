@@ -230,6 +230,7 @@ public class GPSHandlerManager implements
     public void onLocationChanged(Location location) {
         mCurrentLocation = location;
         mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
+        location.getBearing();
 
         if (mLocationListener != null) {
             mLocationListener.onLocationChanged(location);
@@ -274,27 +275,5 @@ public class GPSHandlerManager implements
         if (mGoogleApiClient.isConnected()) {
             mGoogleApiClient.disconnect();
         }
-    }
-
-    public List<LatLng> getBoundingBox(final LatLng pPosition, final int pDistanceInMeters) {
-
-        final List<LatLng> boundingBox = new ArrayList<>();
-
-        final double latRadian = Math.toRadians(pPosition.latitude);
-
-        final double degLatKm = 110.574235;
-        final double degLongKm = 110.572833 * Math.cos(latRadian);
-        final double deltaLat = pDistanceInMeters / 1000.0 / degLatKm;
-        final double deltaLong = pDistanceInMeters / 1000.0 / degLongKm;
-
-        final double minLat = pPosition.latitude - deltaLat;
-        final double minLong = pPosition.longitude - deltaLong;
-        final double maxLat = pPosition.latitude + deltaLat;
-        final double maxLong = pPosition.longitude + deltaLong;
-
-        boundingBox.add(new LatLng(minLat,minLong));
-        boundingBox.add(new LatLng(maxLat,maxLong));
-
-        return boundingBox;
     }
 }
