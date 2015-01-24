@@ -16,4 +16,14 @@
     <style name="NoTitleActionbarStyle" parent="Theme.AppCompat">
         <item name="windowActionBar">false</item>
     </style>
+
+    <style name="StepButtonStyle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">40dp</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:padding">8dp</item>
+    </style>
+
 </resources>

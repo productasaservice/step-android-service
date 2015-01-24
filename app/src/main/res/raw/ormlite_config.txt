@@ -1,5 +1,5 @@
 #
-# generated on 2015/01/18 06:33:39
+# generated on 2015/01/24 06:03:34
 #
 # --table-start--
 dataClass=com.discover.step.model.StepPoint
@@ -10,7 +10,7 @@ fieldName=id
 generatedId=true
 # --field-end--
 # --field-start--
-fieldName=user_id
+fieldName=user_social_id
 # --field-end--
 # --field-start--
 fieldName=created_at
@@ -38,6 +38,41 @@ fieldName=description
 # --field-end--
 # --field-start--
 fieldName=isDrawnPoint
+# --field-end--
+# --field-start--
+fieldName=isVisibleOnMap
+# --field-end--
+# --table-fields-end--
+# --table-end--
+#################################
+# --table-start--
+dataClass=com.discover.step.model.User
+tableName=user
+# --table-fields-start--
+# --field-start--
+fieldName=id
+generatedId=true
+# --field-end--
+# --field-start--
+fieldName=social_id
+# --field-end--
+# --field-start--
+fieldName=first_name
+# --field-end--
+# --field-start--
+fieldName=last_name
+# --field-end--
+# --field-start--
+fieldName=email
+# --field-end--
+# --field-start--
+fieldName=picture_url
+# --field-end--
+# --field-start--
+fieldName=login_type
+# --field-end--
+# --field-start--
+fieldName=isLoggedIn
 # --field-end--
 # --table-fields-end--
 # --table-end--

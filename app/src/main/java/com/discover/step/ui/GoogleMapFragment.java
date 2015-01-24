@@ -13,7 +13,9 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.discover.step.R;
+import com.discover.step.async.SafeAsyncTask;
 import com.discover.step.bl.GPSHandlerManager;
+import com.discover.step.bl.LocationStoreProxy;
 import com.discover.step.bl.StepManager;
 import com.discover.step.interfaces.IGpsLoggerServiceClient;
 import com.discover.step.model.StepPoint;
@@ -49,6 +51,7 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
     private RelativeLayout mProgressRl, mGMRootRl;
 
     private boolean mIsDrawingEnabled = false;
+    private boolean mIsUpdateNeeded = false;
     private boolean mIsAppInBackground = false;
 
     //Store missing locations.
@@ -108,13 +111,13 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
             public void run() {
                 //show progress bar till we don't have current location.
                 if (currentLocation == null) {
-                    mMapView.postDelayed(this,1000);
+                    mMapView.postDelayed(this, 1000);
                     return;
                 }
 
-                final LatLng location = new LatLng(currentLocation.getLatitude(),currentLocation.getLongitude());
+                final LatLng location = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
 
-                GroundOverlayOptions newarkMap = new GroundOverlayOptions().image(BitmapDescriptorFactory.fromResource(R.drawable.ground_overlay)).position(location,8600000f,8600000f);
+                GroundOverlayOptions newarkMap = new GroundOverlayOptions().image(BitmapDescriptorFactory.fromResource(R.drawable.ground_overlay)).position(location, 8600000f, 8600000f);
                 mMap.clear();
                 mMap.setMapType(GoogleMap.MAP_TYPE_NONE);
                 mMap.addGroundOverlay(newarkMap);
@@ -122,9 +125,9 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
                 mMap.getUiSettings().setCompassEnabled(false);
 
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 18));
-                List<LatLng> boundList = getBoundingBox(location,80);
-                BOUNDS = new LatLngBounds(boundList.get(0),boundList.get(1));
-                mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(BOUNDS,0));
+                List<LatLng> boundList = getBoundingBox(location, 80);
+                BOUNDS = new LatLngBounds(boundList.get(0), boundList.get(1));
+                mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(BOUNDS, 0));
 
                 //Add main marker.
                 mainMarker = mMap.addMarker(new MarkerOptions()
@@ -134,6 +137,7 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
                 //Limit min zoom level.
                 mMap.setOnCameraChangeListener(new GoogleMap.OnCameraChangeListener() {
                     private float currentZoom = -1;
+
                     @Override
                     public void onCameraChange(CameraPosition cameraPosition) {
                         if (cameraPosition.zoom != currentZoom) {
@@ -156,7 +160,7 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
                     public void run() {
                         mProgressRl.setVisibility(View.GONE);
                         mStartDrawingBt.setVisibility(View.VISIBLE);
-                        updateMissingMarkers();
+                        new DrawMarkersTask(false).execute();
                         animateMainMarker();
                     }
                 }, 500);
@@ -164,7 +168,7 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
                 //init last step location.
                 lastLocation = currentLocation;
             }
-        },1000);
+        }, 1000);
     }
 
     @Override
@@ -181,7 +185,10 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
         super.onResume();
 
         mIsAppInBackground = false;
-        updateMissingMarkers();
+
+        if (mIsUpdateNeeded) {
+            new DrawMarkersTask(true).execute();
+        }
     }
 
     @Override
@@ -196,11 +203,13 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
     public void onStop() {
         super.onStop();
         mIsAppInBackground = true;
+        mIsUpdateNeeded = true;
     }
 
     @Override
     public void onDestroy() {
         mIsDrawingEnabled = false;
+        mIsUpdateNeeded = true;
 
         if (mMapView != null) {
             mMapView.onDestroy();
@@ -251,32 +260,53 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
                     .icon(new MarkerImageBuilder(getResources()).asPrimary(false).withColor(draw_point.color).build())
                     .position(new LatLng(location.getLatitude(), location.getLongitude())));
 
-            //Insert step point into db.
-            StepManager.getInstance().setStepPoint(draw_point);
-        } else {
-            //if the app goes to background we store the new points and not draw to mapView.
-            missingStepPoints.add(draw_point);
+            draw_point.isVisibleOnMap = true;
         }
+
+        //Insert step point into db using proxy.
+        LocationStoreProxy.getInstance().insertStepPoint(draw_point);
     }
 
     /**
      * Draw the missing markers and update camera & main marker position.
      */
-    private void updateMissingMarkers() {
-        if (!missingStepPoints.isEmpty()) {
-            Location current_location = GPSHandlerManager.getInstance().getCurrentLocation();
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(current_location.getLatitude(),current_location.getLongitude()), 18));
-            mainMarker.setPosition(new LatLng(current_location.getLatitude(),current_location.getLongitude()));
-
-            for (StepPoint sp : missingStepPoints) {
-                mMap.addMarker(new MarkerOptions()
-                        .icon(new MarkerImageBuilder(mActivity.getResources()).asPrimary(false).withColor(sp.color).build())
-                        .position(new LatLng(sp.latitude, sp.longitude)));
-            }
-
-            missingStepPoints.clear();
-        }
-    }
+//    private void updateMissingMarkers() {
+//        mMapView.post(new Runnable() {
+//            @Override
+//            public void run() {
+//                if (!missingStepPoints.isEmpty()) {
+//                    Location current_location = GPSHandlerManager.getInstance().getCurrentLocation();
+//                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(current_location.getLatitude(),current_location.getLongitude()), 18));
+//                    mainMarker.setPosition(new LatLng(current_location.getLatitude(),current_location.getLongitude()));
+//
+//                    List<StepPoint> temp = new ArrayList<>();
+//                    int COUNT = 15;
+//
+//                    for (StepPoint sp : missingStepPoints) {
+//
+//                        if (temp.size() < COUNT) {
+//                            temp.add(sp);
+//                        } else {
+//                            double avg_lat = 0;
+//                            double avg_lng = 0;
+//                            for (StepPoint p : temp) {
+//                                avg_lat = avg_lat + p.latitude;
+//                                avg_lng = avg_lng + p.longitude;
+//                            }
+//
+//                            mMap.addMarker(new MarkerOptions()
+//                                    .icon(new MarkerImageBuilder(mActivity.getResources()).asPrimary(false).withColor(sp.color).build())
+//                                    .position(new LatLng(avg_lat / temp.size(), avg_lng / temp.size())));
+//                            temp = new ArrayList<>();
+//                            temp.add(sp);
+//                        }
+//                    }
+//
+//                    missingStepPoints.clear();
+//                }
+//            }
+//        });
+//    }
 
     //Draw section.
     @Override
@@ -353,5 +383,41 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
 
     private LatLng convertLocationToLatLng(Location location) {
         return new LatLng(location.getLatitude(),location.getLongitude());
+    }
+
+    private class DrawMarkersTask extends SafeAsyncTask<Void,Void,List<StepPoint>> {
+
+        private boolean isMissingPointsNeeded;
+
+        public DrawMarkersTask(boolean isMissingPointsNeeded) {
+            this.isMissingPointsNeeded = isMissingPointsNeeded;
+        }
+
+        @Override
+        protected List<StepPoint> doWorkInBackground(Void... params) throws Exception {
+            if (isMissingPointsNeeded) {
+                LocationStoreProxy.getInstance().forceOfStoreStepPoints();
+
+                return StepManager.getInstance().getNotDrawnStepPoints();
+            } else {
+                return StepManager.getInstance().getNotDrawnStepPoints();
+            }
+        }
+
+        @Override
+        protected void onSuccess(List<StepPoint> stepPoints) {
+            super.onSuccess(stepPoints);
+            if (isMissingPointsNeeded) {
+                currentLocation = GPSHandlerManager.getInstance().getCurrentLocation();
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), 18));
+                mainMarker.setPosition(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()));
+            }
+
+            for (StepPoint sp : stepPoints) {
+                mMap.addMarker(new MarkerOptions()
+                        .icon(new MarkerImageBuilder(mActivity.getResources()).asPrimary(false).withColor(sp.color).build())
+                        .position(new LatLng(sp.latitude,sp.longitude)));
+            }
+        }
     }
 }

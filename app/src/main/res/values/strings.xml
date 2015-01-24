@@ -8,12 +8,13 @@
     <string name="title_activity_splash">SplashActivity</string>
     <string name="drawing_enabled">Drawing enabled</string>
     <string name="drawing_disabled">Drawing disabled</string>
+    <string name="login_button_text">Login</string>
 
-    <!--notification text-->
+    <!-- notification text -->
     <string name="notification_title">Step</string>
     <string name="notification_text">Tap here to view your steps!</string>
 
-    <!--dialog text-->
+    <!-- dialog text -->
     <string name="exit_dialog_title">Exit</string>
     <string name="exit_dialog_text">Are you sure want to exit?</string>
     <string name="dialog_cancel">Cancel</string>
@@ -21,5 +22,10 @@
     <string name="no_gps_title">No GPS Connection</string>
     <string name="no_gps_positive">Enable</string>
     <string name="no_gps_cancel">Exit</string>
+    <string name="title_activity_login">Login</string>
+
+    <!-- social text -->
+    <string name="facebook_app_id">709391475848406</string>
+    <string name="login_facebook_title">Login</string>
 
 </resources>

@@ -54,4 +54,21 @@ public class StepManager {
             return new ArrayList<>();
         }
     }
+
+    public List<StepPoint> getNotDrawnStepPoints() {
+        try {
+            return DatabaseConnector.getInstance().getNotDrawnStepPoints();
+        } catch (DefaultStepException e) {
+            Log.w("StepManager", "Get Step Points Exception: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    public void updateStepPoints(List<StepPoint> points) {
+        try {
+            DatabaseConnector.getInstance().updateStepPoints(points);
+        } catch (DefaultStepException e) {
+            Log.w("StepManager", "Update Step Points Exception: " + e.getMessage());
+        }
+    }
 }
