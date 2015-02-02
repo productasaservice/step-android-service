@@ -9,6 +9,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -18,8 +19,14 @@ import android.view.MenuItem;
 import com.afollestad.materialdialogs.MaterialDialogCompat;
 import com.discover.step.R;
 import com.discover.step.async.GPSTrackerService;
-import com.discover.step.bl.NotificationManager;
+import com.discover.step.async.StepDataSyncService;
+import com.discover.step.bc.DatabaseConnector;
+import com.discover.step.bl.LocationStoreProxy;
 import com.discover.step.interfaces.IGpsLoggerServiceClient;
+import com.discover.step.model.Day;
+import com.discover.step.model.StepPoint;
+
+import java.util.List;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -27,16 +34,21 @@ public class MainActivity extends ActionBarActivity {
     private static final int GPS_REQUEST_CODE = 695;
     private static final String TAG = "Main Activity";
 
-    private Fragment fragment;
+    private static Fragment fragment, profile;
     private GPSTrackerService trackingService;
     private Intent serviceIntent;
+
+    public static boolean isOptionsMenuEnabled = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        startService(new Intent(this, StepDataSyncService.class));
+
         fragment = new GoogleMapFragment();
+        profile = new ProfileFragment();
 
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.map_layoutFl, fragment).commit();
@@ -57,6 +69,7 @@ public class MainActivity extends ActionBarActivity {
 
     private void buildAlertMessageNoGps() {
         MaterialDialogCompat.Builder dialogBuilder = new MaterialDialogCompat.Builder(this);
+        dialogBuilder.setCancelable(false);
         dialogBuilder.setTitle(R.string.no_gps_title);
         dialogBuilder.setMessage(R.string.no_gps_message);
         dialogBuilder.setPositiveButton(R.string.no_gps_positive, new DialogInterface.OnClickListener() {
@@ -68,6 +81,7 @@ public class MainActivity extends ActionBarActivity {
         dialogBuilder.setNegativeButton(R.string.no_gps_cancel,new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                stopAndUnbindServiceIfRequired();
                 MainActivity.super.onBackPressed();
             }
         });
@@ -84,7 +98,10 @@ public class MainActivity extends ActionBarActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        //getMenuInflater().inflate(R.menu.menu_main, menu);
+        if (isOptionsMenuEnabled) {
+            getMenuInflater().inflate(R.menu.menu_main, menu);
+        }
+
         return true;
     }
 
@@ -96,7 +113,17 @@ public class MainActivity extends ActionBarActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_profile) {
+            if (profile.isAdded() && profile.isHidden()) {
+                getSupportFragmentManager().beginTransaction()
+                        .show(profile).commit();
+
+                ((ProfileFragment) profile).updateScreenData();
+            } else {
+                getSupportFragmentManager().beginTransaction()
+                        .add(R.id.content_layoutFl, profile).commit();
+            }
+
             return true;
         }
 
@@ -105,14 +132,24 @@ public class MainActivity extends ActionBarActivity {
 
     @Override
     public void onBackPressed() {
+        if (profile.isVisible()) {
+            FragmentManager fm = getSupportFragmentManager();
+            fm.beginTransaction().hide(profile).commit();
+
+            MainActivity.isOptionsMenuEnabled = true;
+            supportInvalidateOptionsMenu();
+            return;
+        }
+
         MaterialDialogCompat.Builder dialogBuilder = new MaterialDialogCompat.Builder(this);
         dialogBuilder.setTitle(R.string.exit_dialog_title);
         dialogBuilder.setMessage(R.string.exit_dialog_text);
         dialogBuilder.setPositiveButton(R.string.exit_dialog_title, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                NotificationManager.getInstance().setEnabled(false);
+
                 MainActivity.super.onBackPressed();
+                LocationStoreProxy.getInstance().forceOfStoreStepPoints();
                 stopAndUnbindServiceIfRequired();
             }
         });
@@ -171,4 +208,10 @@ public class MainActivity extends ActionBarActivity {
             GPSTrackerService.setServiceClient((IGpsLoggerServiceClient)fragment);
         }
     };
+
+    public static void showMarkersOnMap(List<StepPoint> stepPoint) {
+        if (fragment != null) {
+            ((GoogleMapFragment) fragment).addFurtherSteps(stepPoint);
+        }
+    }
 }

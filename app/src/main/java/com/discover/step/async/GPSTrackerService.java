@@ -14,13 +14,14 @@ import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
 import com.discover.step.R;
+import com.discover.step.Session;
 import com.discover.step.bl.GPSHandlerManager;
+import com.discover.step.bl.LocationStoreProxy;
 import com.discover.step.interfaces.IGpsLoggerServiceClient;
+import com.discover.step.model.StepPoint;
 import com.discover.step.ui.MainActivity;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.model.LatLng;
-
-import java.util.List;
 
 /**
  * Created by Geri on 2015.01.18..
@@ -36,6 +37,9 @@ public class GPSTrackerService extends Service {
 
     AlarmManager mNextPointAlarmManager;
     private NotificationCompat.Builder nfc = null;
+
+    Location lastLocation;
+    Location currentLocation;
 
     @Override
     public void onCreate() {
@@ -63,6 +67,7 @@ public class GPSTrackerService extends Service {
     public void onDestroy() {
         mainServiceClient = null;
         gpsHandlerManager.onStop();
+        removeNotification();
         super.onDestroy();
     }
 
@@ -87,17 +92,16 @@ public class GPSTrackerService extends Service {
                 if (startRightNow) {
                     Log.d("GpsTrackerService", "Intent received - Start Logging Now");
                     gpsHandlerManager.startUpdates();
+
+                    //Registration for location changes.
                     gpsHandlerManager.setOnLocationChangeListener(new LocationListener() {
                         @Override
                         public void onLocationChanged(Location location) {
-                            if (isMainFormVisible()) {
-                                mainServiceClient.OnLocationUpdate(location);
-                            }
+                            storeStepPoints(location);
                         }
                     });
 
                     showNotification();
-
                 }
 
                 if (stopRightNow) {
@@ -166,4 +170,52 @@ public class GPSTrackerService extends Service {
         Location loc = getCurrentLocation();
         return loc != null ? new LatLng(loc.getLatitude(),loc.getLongitude()) : null;
     }
+
+    private void storeStepPoints(Location location) {
+        if (location != null && currentLocation != null
+                && currentLocation.getLatitude() != location.getLatitude()
+                && currentLocation.getLongitude() != location.getLongitude()) {
+
+            //Call client onNewStepPointsAvailable function.
+            if (isMainFormVisible()) {
+                mainServiceClient.onMainPositionChange(location);
+            }
+
+            //TODO here we set the conditions of sampling.
+            if (lastLocation != null && distanceFromLastPoint(location) >= 5) {
+                lastLocation = location;
+
+                //Create new step point instance from location.
+                StepPoint stepPoint = new StepPoint();
+                stepPoint.bindLocation(location);
+
+                //Increase step.
+                Session.increaseStep();
+
+                //Insert step point into db using proxy.
+                LocationStoreProxy.getInstance().insertStepPoint(stepPoint);
+
+                //Call client onNewStepPointsAvailable function.
+                if (isMainFormVisible()) {
+                    mainServiceClient.onNewStepPointsAvailable(stepPoint);
+                }
+            }
+        }
+
+        if (lastLocation == null) {
+            lastLocation = currentLocation;
+        }
+
+        currentLocation = location;
+    }
+
+    /**
+     * Calculate distance from last step.
+     * @param location
+     * @return
+     */
+    private int distanceFromLastPoint(Location location) {
+        return (int) location.distanceTo(lastLocation);
+    }
+
 }

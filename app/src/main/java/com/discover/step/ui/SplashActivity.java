@@ -1,22 +1,14 @@
 package com.discover.step.ui;
 
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.Signature;
-import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-import android.util.Base64;
-import android.util.Log;
 
-import com.discover.step.Config;
 import com.discover.step.R;
 import com.discover.step.async.SafeAsyncTask;
+import com.discover.step.async.SyncAllDataTask;
 import com.discover.step.bc.DatabaseConnector;
-
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import com.discover.step.bl.PrefManager;
 
 public class SplashActivity extends ActionBarActivity {
 
@@ -25,23 +17,10 @@ public class SplashActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
-        new CheckAuthenticationTask().execute();
+        new CheckUserDataInLocalDbTask().execute();
     }
 
-    /**
-     * Start main activity
-     */
-    private void startMainActivity(boolean isLoggedIn) {
-        if (isLoggedIn) {
-            startActivity(new Intent(SplashActivity.this, MainActivity.class));
-        } else {
-            startActivity(new Intent(SplashActivity.this, LoginActivity.class));
-        }
-
-        finish();
-    }
-
-    private class CheckAuthenticationTask extends SafeAsyncTask<Void,Void,Boolean> {
+    private class CheckUserDataInLocalDbTask extends SafeAsyncTask<Void,Void,Boolean> {
 
         @Override
         protected Boolean doWorkInBackground(Void... params) throws Exception {
@@ -54,4 +33,31 @@ public class SplashActivity extends ActionBarActivity {
             startMainActivity(success);
         }
     }
+
+    /**
+     * Start main activity
+     */
+    private void startMainActivity(boolean isLoggedIn) {
+        if (isLoggedIn) {
+            //Download initial data.
+            if (!PrefManager.getInstance().isInitialDataSynced()) {
+                new SyncAllDataTask(new SyncAllDataTask.OnSyncReadyListener() {
+                    @Override
+                    public void onReady() {
+                        PrefManager.getInstance().setIsInitialDataSynced();
+                        startActivity(new Intent(SplashActivity.this, MainActivity.class));
+                    }
+                }).execute();
+            } else {
+                startActivity(new Intent(SplashActivity.this, MainActivity.class));
+            }
+
+        } else {
+            //Go to login screen.
+            startActivity(new Intent(SplashActivity.this, LoginActivity.class));
+        }
+
+        finish();
+    }
+
 }

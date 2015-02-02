@@ -1,6 +1,10 @@
 package com.discover.step.bl;
 
+import android.provider.ContactsContract;
+import android.util.Log;
+
 import com.discover.step.bc.DatabaseConnector;
+import com.discover.step.bc.ServerConnector;
 import com.discover.step.ex.DefaultStepException;
 import com.discover.step.model.User;
 
@@ -33,6 +37,15 @@ public class UserManager {
         } catch (DefaultStepException e) {
             e.printStackTrace();
             return null;
+        }
+    }
+
+    public void updateUser(User user) {
+        try {
+            DatabaseConnector.getInstance().updateUser(user);
+            ServerConnector.getInstance().updateUserData(user);
+        } catch (DefaultStepException e) {
+            Log.w("UserManager", "Update user Exception: " + e.getMessage());
         }
     }
 

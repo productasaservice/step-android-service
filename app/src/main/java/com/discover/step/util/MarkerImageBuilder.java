@@ -22,6 +22,7 @@ public class MarkerImageBuilder {
 
     private Resources res;
     private boolean isPrimary;
+    private boolean isAlphaEnabled = false;
 
     private int main_color;
 
@@ -37,6 +38,11 @@ public class MarkerImageBuilder {
 
     public MarkerImageBuilder withColor(int color_res) {
         main_color = res.getColor(color_res);
+        return this;
+    }
+
+    public MarkerImageBuilder withAlphaEnabled(boolean isEnabled) {
+        isAlphaEnabled = isEnabled;
         return this;
     }
 
@@ -95,6 +101,10 @@ public class MarkerImageBuilder {
         paint.setColor(main_color);
         //set style
         paint.setStyle(Paint.Style.FILL);
+        //set alpha
+        if (isAlphaEnabled) {
+            paint.setAlpha(180);
+        }
         //draw circle with radius 30
         canvas.drawCircle(SIZE / 2, SIZE / 2, RADIUS, paint);
 

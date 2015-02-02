@@ -3,6 +3,7 @@ package com.discover.step.ui;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 
 import com.discover.step.social.FbHandlerV3;
 import com.discover.step.social.FbHandlerV3Listener;
@@ -84,9 +85,11 @@ public class SocialActivity extends ActionBarActivity {
 
             mGooglePlus.intentInProgress = false;
 
+            Log.d("test--","onAResult, plus" + mGooglePlus.isConnecting());
             if (!mGooglePlus.isConnecting()) {
                 mGooglePlus.connect();
             }
+
         } else {
             mFacebook.onActivityResult(requestCode, responseCode, intent);
         }

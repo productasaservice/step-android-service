@@ -3,6 +3,11 @@ package com.discover.step;
 import android.app.Application;
 import android.content.Context;
 
+import com.discover.step.bl.PrefManager;
+import com.nostra13.universalimageloader.cache.disc.naming.Md5FileNameGenerator;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
+import com.nostra13.universalimageloader.core.assist.QueueProcessingType;
 import com.parse.Parse;
 
 /**
@@ -18,10 +23,27 @@ public class StepApplication extends Application {
 
         mContext = getApplicationContext();
 
+        //init parse core data connection.
         Parse.initialize(this, "sKZmGMYBHLvpFCDtMwnYuMdtw0kbx9V0EbfbwEN9", "dFy6L1C8mtxWNRucfcGqdp8XBcl6UH8baAbFZLCy");
+
+        //set default value to highlighted mode.
+        PrefManager.getInstance().setIsHighlightedEnabled(false);
+
+        initImageLoader(mContext);
     }
 
     public static Context getContext() {
         return mContext;
+    }
+
+    /**
+     * Initialize image loader
+     * @param context
+     */
+    public static void initImageLoader(Context context) {
+        ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(context).threadPriority(Thread.NORM_PRIORITY - 2).denyCacheImageMultipleSizesInMemory()
+                .discCacheFileNameGenerator(new Md5FileNameGenerator()).tasksProcessingOrder(QueueProcessingType.LIFO).build();
+
+        ImageLoader.getInstance().init(config);
     }
 }

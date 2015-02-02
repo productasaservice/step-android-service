@@ -6,6 +6,8 @@
     <color name="main_marker_color">#FF9900</color>
     <color name="main_marker_color_with_alpha">#99FF9900</color>
     <color name="secondary_marker_color">#4E75C8</color>
+    <color name="gray_style_1">#595959</color>
+    <color name="gray_style_2">#333333</color>
 
     <color name="facebook_blue_color">#376177</color>
     <color name="facebook_blue_color_selected">#CC376177</color>

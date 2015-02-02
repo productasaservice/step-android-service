@@ -2,20 +2,29 @@ package com.discover.step.social;
 
 import android.app.Activity;
 import android.content.IntentSender;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 
 import com.discover.step.model.User;
+import com.google.android.gms.auth.GoogleAuthException;
+import com.google.android.gms.auth.GoogleAuthUtil;
+import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Result;
 import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.plus.People;
 import com.google.android.gms.plus.Plus;
+import com.google.android.gms.plus.PlusClient;
 import com.google.android.gms.plus.model.people.Person;
 import com.google.android.gms.plus.model.people.PersonBuffer;
 
+import java.io.IOException;
 import java.text.ParseException;
 
 /**
@@ -23,12 +32,16 @@ import java.text.ParseException;
  */
 
 public class GooglePlusHandler implements ResultCallback<People.LoadPeopleResult>, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+    /*Client used to interact with Google APIs*/
     private static GoogleApiClient mGoogleApiClient;
     private static ConnectionResult mConnectionResult;
     private static Person mCurrentPerson;
     private static Activity mActivity;
     private static GooglePlusListener mListeners;
 
+  /* A flag indicating that a PendingIntent is in progress and prevents
+   * us from starting further intents.
+   */
     public static boolean intentInProgress;
     public static boolean signInClicked;
 
@@ -95,27 +108,43 @@ public class GooglePlusHandler implements ResultCallback<People.LoadPeopleResult
     public void onConnected(Bundle bundle) {
         signInClicked = false;
 
+        Log.d("test--","connected");
+
         Plus.PeopleApi.loadVisible(mGoogleApiClient, null).setResultCallback(this);
 
-        if (Plus.PeopleApi.getCurrentPerson(mGoogleApiClient) != null) {
+
+       if (Plus.PeopleApi.getCurrentPerson(mGoogleApiClient) != null) {
             mCurrentPerson = Plus.PeopleApi.getCurrentPerson(mGoogleApiClient);
-        } else {
+
+       } else {
             Log.d("test--","nem érem el..");
         }
+
+        String name = Plus.AccountApi.getAccountName(mGoogleApiClient);
+
+        Log.d("test--","name: " + name);
+
+        if (Plus.PeopleApi == null) {
+            Log.d("test--","ez nulla apám..");
+        }
+
+        //task.execute((Void) null);
 
         if(mListeners != null) {
             mListeners.onConnected(mInstance);
         }
-
     }
 
     @Override
     public void onConnectionSuspended(int i) {
+
+        Log.d("test--","connection suspended");
         mGoogleApiClient.connect();
     }
 
     @Override
     public void onConnectionFailed(ConnectionResult result) {
+        Log.d("test--","connection failed");
         if (!intentInProgress) {
             // Store the ConnectionResult so that we can use it later when the user clicks
             // 'sign-in'.
@@ -131,11 +160,14 @@ public class GooglePlusHandler implements ResultCallback<People.LoadPeopleResult
 
     /* A helper method to resolve the current ConnectionResult error. */
     private void resolveSignInError() {
+        Log.d("test--","resolve 1");
         if (mConnectionResult.hasResolution()) {
             try {
+                Log.d("test--","resolve 2");
                 intentInProgress = true;
                 mConnectionResult.startResolutionForResult(mActivity,RC_SIGN_IN);
             } catch (IntentSender.SendIntentException e) {
+                Log.d("test--","resolve 2 ex");
                 // The intent was canceled before it was sent.  Return to the default
                 // state and attempt to connect to get an updated ConnectionResult.
                 intentInProgress = false;
@@ -186,8 +218,11 @@ public class GooglePlusHandler implements ResultCallback<People.LoadPeopleResult
 
     @Override
     public void onResult(People.LoadPeopleResult loadPeopleResult) {
+        Log.d("test--","result: " + loadPeopleResult.getStatus());
         if (loadPeopleResult.getStatus().getStatusCode() == CommonStatusCodes.SUCCESS) {
             PersonBuffer personBuffer = loadPeopleResult.getPersonBuffer();
+
+            Log.d("test--","onResultban vagyok...");
         }
     }
 }

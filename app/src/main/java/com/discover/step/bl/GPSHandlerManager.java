@@ -12,6 +12,7 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.plus.Plus;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -107,6 +108,8 @@ public class GPSHandlerManager implements
                 .build();
         createLocationRequest();
     }
+
+
 
     /**
      * Sets up the location request. Android has two location request settings:

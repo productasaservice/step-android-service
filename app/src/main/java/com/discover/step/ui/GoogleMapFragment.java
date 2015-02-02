@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,12 +14,21 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.discover.step.R;
+import com.discover.step.Session;
 import com.discover.step.async.SafeAsyncTask;
+import com.discover.step.bc.DatabaseConnector;
+import com.discover.step.bl.AchievementManager;
 import com.discover.step.bl.GPSHandlerManager;
 import com.discover.step.bl.LocationStoreProxy;
+import com.discover.step.bl.PrefManager;
 import com.discover.step.bl.StepManager;
+import com.discover.step.bl.UserManager;
+import com.discover.step.ex.DefaultStepException;
 import com.discover.step.interfaces.IGpsLoggerServiceClient;
+import com.discover.step.model.Achievement;
+import com.discover.step.model.Day;
 import com.discover.step.model.StepPoint;
+import com.discover.step.model.User;
 import com.discover.step.util.MarkerImageBuilder;
 import com.gc.materialdesign.views.ButtonFloat;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -43,9 +53,11 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
 
     public static final String TAG = "Google Map Fragment";
 
+    private User currentUser;
     private MapView mMapView;
     private GoogleMap mMap;
     private Marker mainMarker;
+    private RelativeLayout mInformationRl;
 
     private ButtonFloat mStartDrawingBt;
     private RelativeLayout mProgressRl, mGMRootRl;
@@ -59,9 +71,11 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
 
     Location lastLocation;
     Location currentLocation;
+    StepPoint currentStepPoint;
 
     private LatLngBounds BOUNDS;
     private final int MIN_ZOOM = 10;
+    private static int STEP_COUNT = 0;
 
     MainActivity mActivity;
 
@@ -76,32 +90,50 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
         setRetainInstance(true);
         View view = inflater.inflate(R.layout.fragment_google_map,container,false);
 
+        mInformationRl = (RelativeLayout) view.findViewById(R.id.map_informationRl);
         mStartDrawingBt = (ButtonFloat) view.findViewById(R.id.buttonFloat);
         mProgressRl = (RelativeLayout) view.findViewById(R.id.drawing_progressRl);
         mMapView = ((MapView) view.findViewById(R.id.drawing_mapView));
         mGMRootRl = (RelativeLayout) view.findViewById(R.id.google_map_rootRl);
-        mMapView.onCreate(savedInstanceState);
 
         missingStepPoints = new ArrayList<>();
 
+        //Highlighted mode switch button
         mStartDrawingBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (mIsDrawingEnabled) {
-                    mIsDrawingEnabled = false;
-                    Toast.makeText(getActivity(), R.string.drawing_disabled, Toast.LENGTH_SHORT).show();
-                } else {
-                    mIsDrawingEnabled = true;
-                    Toast.makeText(getActivity(), R.string.drawing_enabled, Toast.LENGTH_SHORT).show();
-                }
+                highlightDrawing();
             }
         });
 
+        //Show information window about highlighted mode, at first start.
+        if (!PrefManager.getInstance().isInformationScreenWasShown()) {
+            mInformationRl.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    PrefManager.getInstance().setIsInformationScreenWasShown();
+                    mInformationRl.setVisibility(View.GONE);
+                }
+            });
+        } else {
+            mInformationRl.setVisibility(View.GONE);
+        }
+
+        //Initialize Session.
+        Session.start();
+        PrefManager.getInstance().setUserStepCount(Session.authenticated_user_social_id,Session.step_count);
+
+        mMapView.onCreate(savedInstanceState);
+
+        //Initialize Map.
         initMap();
 
         return view;
     }
 
+    /**
+     * Initialize map.
+     */
     private void initMap() {
         MapsInitializer.initialize(mActivity);
 
@@ -109,6 +141,8 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
         mMapView.postDelayed(new Runnable() {
             @Override
             public void run() {
+                currentLocation = GPSHandlerManager.getInstance().getCurrentLocation();
+
                 //show progress bar till we don't have current location.
                 if (currentLocation == null) {
                     mMapView.postDelayed(this, 1000);
@@ -150,18 +184,32 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
                     }
                 });
 
-                //Add GPS points from db.
-                missingStepPoints.addAll(StepManager.getInstance().getStepPoints());
+                //Need it to return true to avoid in build feature. (route planning)
+                mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+                    @Override
+                    public boolean onMarkerClick(Marker marker) {
+                        return true;
+                    }
+                });
+
+                //On map click event handler.
+                mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+                    @Override
+                    public void onMapClick(LatLng latLng) {
+                        highlightDrawing();
+                    }
+                });
 
                 //Show map and float button with 500 ms delay.
-                mStartDrawingBt.isAnimate(true);
+                //mStartDrawingBt.isAnimate(true);
                 mMapView.postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         mProgressRl.setVisibility(View.GONE);
-                        mStartDrawingBt.setVisibility(View.VISIBLE);
-                        new DrawMarkersTask(false).execute();
+                        //mStartDrawingBt.setVisibility(View.VISIBLE);
                         animateMainMarker();
+                        MainActivity.isOptionsMenuEnabled = true;
+                        getActivity().supportInvalidateOptionsMenu();
                     }
                 }, 500);
 
@@ -171,6 +219,43 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
         }, 1000);
     }
 
+    /**
+     * Add your last position marker to map.
+     * @param location
+     */
+    private void addStepMark(StepPoint location) {
+
+        if (!mIsAppInBackground) {
+            //Add marker to map.
+            mMap.addMarker(new MarkerOptions()
+                    .icon(new MarkerImageBuilder(getResources()).asPrimary(false).withColor(location.color).build())
+                    .position(new LatLng(location.latitude, location.longitude)));
+
+            location.isVisibleOnMap = true;
+        } else {
+            missingStepPoints.add(location);
+            mIsUpdateNeeded = true;
+        }
+
+        Achievement achievement = AchievementManager.getInstance().checkForNewBadge();
+        if (achievement != null) {
+            Toast.makeText(mActivity,achievement.message,Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /**
+     * Add loaded step points.
+     * @param stepPoints
+     */
+    public void addFurtherSteps(List<StepPoint> stepPoints) {
+        Log.d("test--","further stpe:" + stepPoints.size());
+        for (StepPoint sp : stepPoints) {
+            mMap.addMarker(new MarkerOptions()
+                    .icon(new MarkerImageBuilder(mActivity.getResources()).asPrimary(false).withColor(sp.color).withAlphaEnabled(true).build())
+                    .position(new LatLng(sp.latitude, sp.longitude)));
+        }
+    }
+
     @Override
     public void onStart() {
         super.onStart();
@@ -178,17 +263,22 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
 
     @Override
     public void onResume() {
+        mIsAppInBackground = false;
 
         if (mMapView != null) {
             mMapView.onResume();
         }
         super.onResume();
 
-        mIsAppInBackground = false;
-
+        //Load gps points witch hadn't draw to map.
         if (mIsUpdateNeeded) {
             new DrawMarkersTask(true).execute();
+            currentLocation = GPSHandlerManager.getInstance().getCurrentLocation();
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), 18));
+            mainMarker.setPosition(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()));
         }
+
+        mIsUpdateNeeded = false;
     }
 
     @Override
@@ -208,7 +298,6 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
 
     @Override
     public void onDestroy() {
-        mIsDrawingEnabled = false;
         mIsUpdateNeeded = true;
 
         if (mMapView != null) {
@@ -233,104 +322,36 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
         super.onSaveInstanceState(outState);
     }
 
-    /**
-     * Calculate distance from last step.
-     * @param location
-     * @return
-     */
-    private int distanceFromLastPoint(Location location) {
-        return (int) location.distanceTo(lastLocation);
-    }
+    @Override
+    public void onNewStepPointsAvailable(StepPoint stepPoint) {
 
-    /**
-     * Add your last position marker to map.
-     * @param location
-     */
-    private void addStepMark(Location location) {
-        lastLocation = location;
-        StepPoint draw_point = new StepPoint();
-        draw_point.bindLocation(location);
-        draw_point.color = mIsDrawingEnabled ? "#" + Integer.toHexString(getResources().getColor(R.color.main_marker_color)) :
-                "#" + Integer.toHexString(getResources().getColor(R.color.secondary_marker_color));
-        draw_point.isDrawnPoint = mIsDrawingEnabled;
-
-        if (!mIsAppInBackground) {
-            //Add marker to map.
-            mMap.addMarker(new MarkerOptions()
-                    .icon(new MarkerImageBuilder(getResources()).asPrimary(false).withColor(draw_point.color).build())
-                    .position(new LatLng(location.getLatitude(), location.getLongitude())));
-
-            draw_point.isVisibleOnMap = true;
+        if (stepPoint != null) {
+            addStepMark(stepPoint);
         }
 
-        //Insert step point into db using proxy.
-        LocationStoreProxy.getInstance().insertStepPoint(draw_point);
+        currentStepPoint = stepPoint;
+    }
+
+    @Override
+    public void onMainPositionChange(Location stepPoint) {
+        if (stepPoint != null) {
+            mainMarker.setPosition(new LatLng(stepPoint.getLatitude(),stepPoint.getLongitude()));
+        }
     }
 
     /**
-     * Draw the missing markers and update camera & main marker position.
+     * Highlight enable / disable func.
      */
-//    private void updateMissingMarkers() {
-//        mMapView.post(new Runnable() {
-//            @Override
-//            public void run() {
-//                if (!missingStepPoints.isEmpty()) {
-//                    Location current_location = GPSHandlerManager.getInstance().getCurrentLocation();
-//                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(current_location.getLatitude(),current_location.getLongitude()), 18));
-//                    mainMarker.setPosition(new LatLng(current_location.getLatitude(),current_location.getLongitude()));
-//
-//                    List<StepPoint> temp = new ArrayList<>();
-//                    int COUNT = 15;
-//
-//                    for (StepPoint sp : missingStepPoints) {
-//
-//                        if (temp.size() < COUNT) {
-//                            temp.add(sp);
-//                        } else {
-//                            double avg_lat = 0;
-//                            double avg_lng = 0;
-//                            for (StepPoint p : temp) {
-//                                avg_lat = avg_lat + p.latitude;
-//                                avg_lng = avg_lng + p.longitude;
-//                            }
-//
-//                            mMap.addMarker(new MarkerOptions()
-//                                    .icon(new MarkerImageBuilder(mActivity.getResources()).asPrimary(false).withColor(sp.color).build())
-//                                    .position(new LatLng(avg_lat / temp.size(), avg_lng / temp.size())));
-//                            temp = new ArrayList<>();
-//                            temp.add(sp);
-//                        }
-//                    }
-//
-//                    missingStepPoints.clear();
-//                }
-//            }
-//        });
-//    }
-
-    //Draw section.
-    @Override
-    public void OnLocationUpdate(Location location) {
-        if (location != null && currentLocation != null && currentLocation.getLatitude() != location.getLatitude() && currentLocation.getLongitude() != location.getLongitude()) {
-            if (!mIsAppInBackground && mainMarker != null) {
-                mainMarker.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
-            }
-
-            if (lastLocation != null && distanceFromLastPoint(location) >= 5) {
-                addStepMark(location);
-            }
+    private void highlightDrawing() {
+        if (mIsDrawingEnabled) {
+            mIsDrawingEnabled = false;
+            PrefManager.getInstance().setIsHighlightedEnabled(false);
+            Toast.makeText(getActivity(), R.string.drawing_disabled, Toast.LENGTH_SHORT).show();
+        } else {
+            mIsDrawingEnabled = true;
+            PrefManager.getInstance().setIsHighlightedEnabled(true);
+            Toast.makeText(getActivity(), R.string.drawing_enabled, Toast.LENGTH_SHORT).show();
         }
-        currentLocation = location;
-    }
-
-    @Override
-    public void OnStartLogging() {
-
-    }
-
-    @Override
-    public void OnStopLogging() {
-
     }
 
     /**
@@ -381,16 +402,30 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
         return boundingBox;
     }
 
+    /**
+     * Location to LatLng converter.
+     * @param location
+     * @return
+     */
     private LatLng convertLocationToLatLng(Location location) {
         return new LatLng(location.getLatitude(),location.getLongitude());
     }
 
+    /**
+     * Draw marker in background thread task.
+     */
     private class DrawMarkersTask extends SafeAsyncTask<Void,Void,List<StepPoint>> {
 
         private boolean isMissingPointsNeeded;
+        private OnMarkersLoadedFinishListener listener;
 
         public DrawMarkersTask(boolean isMissingPointsNeeded) {
             this.isMissingPointsNeeded = isMissingPointsNeeded;
+        }
+
+        public DrawMarkersTask(boolean isMissingPointsNeeded, OnMarkersLoadedFinishListener listener) {
+            this.isMissingPointsNeeded = isMissingPointsNeeded;
+            this.listener = listener;
         }
 
         @Override
@@ -400,24 +435,26 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
 
                 return StepManager.getInstance().getNotDrawnStepPoints();
             } else {
-                return StepManager.getInstance().getNotDrawnStepPoints();
+                return StepManager.getInstance().getStepPoints();
             }
         }
 
         @Override
         protected void onSuccess(List<StepPoint> stepPoints) {
             super.onSuccess(stepPoints);
-            if (isMissingPointsNeeded) {
-                currentLocation = GPSHandlerManager.getInstance().getCurrentLocation();
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), 18));
-                mainMarker.setPosition(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()));
-            }
-
             for (StepPoint sp : stepPoints) {
                 mMap.addMarker(new MarkerOptions()
-                        .icon(new MarkerImageBuilder(mActivity.getResources()).asPrimary(false).withColor(sp.color).build())
-                        .position(new LatLng(sp.latitude,sp.longitude)));
+                        .icon(new MarkerImageBuilder(mActivity.getResources()).asPrimary(false).withColor(sp.color).withAlphaEnabled(!isMissingPointsNeeded).build())
+                        .position(new LatLng(sp.latitude, sp.longitude)));
+            }
+
+            if (listener != null) {
+                listener.onReady();
             }
         }
+    }
+
+    public interface OnMarkersLoadedFinishListener {
+        public void onReady();
     }
 }

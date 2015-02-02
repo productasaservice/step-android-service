@@ -53,125 +53,141 @@ uses-permission#com.google.android.providers.gsf.permission.READ_GSERVICES
 ADDED from AndroidManifest.xml:17:5
 	android:name
 		ADDED from AndroidManifest.xml:17:22
-uses-permission#android.permission.GET_ACCOUNTS
-ADDED from AndroidManifest.xml:19:5
+uses-permission#android.permission.WAKE_LOCK
+ADDED from AndroidManifest.xml:18:5
 	android:name
-		ADDED from AndroidManifest.xml:19:22
-uses-permission#android.permission.USE_CREDENTIALS
+		ADDED from AndroidManifest.xml:18:22
+uses-permission#android.permission.GET_ACCOUNTS
 ADDED from AndroidManifest.xml:20:5
 	android:name
 		ADDED from AndroidManifest.xml:20:22
-uses-feature#0x00020000
+uses-permission#android.permission.USE_CREDENTIALS
+ADDED from AndroidManifest.xml:21:5
+	android:name
+		ADDED from AndroidManifest.xml:21:22
+uses-permission#android.permission.AUTHENTICATE_ACCOUNTS
 ADDED from AndroidManifest.xml:22:5
+	android:name
+		ADDED from AndroidManifest.xml:22:22
+uses-permission#android.permission.READ_PROFILE
+ADDED from AndroidManifest.xml:23:5
+	android:name
+		ADDED from AndroidManifest.xml:23:22
+uses-feature#0x00020000
+ADDED from AndroidManifest.xml:25:5
 	android:required
-		ADDED from AndroidManifest.xml:24:9
+		ADDED from AndroidManifest.xml:27:9
 	android:glEsVersion
-		ADDED from AndroidManifest.xml:23:9
+		ADDED from AndroidManifest.xml:26:9
 application
-ADDED from AndroidManifest.xml:26:5
+ADDED from AndroidManifest.xml:29:5
 MERGED from com.android.support:appcompat-v7:21.0.3:16:5
 MERGED from com.android.support:support-v4:21.0.3:16:5
 MERGED from com.google.android.gms:play-services:6.5.87:20:5
+MERGED from com.android.support:support-v4:21.0.3:16:5
+MERGED from step-android-service.libraries:MaterialDesign:unspecified:11:5
 MERGED from com.android.support:support-v4:21.0.3:16:5
 MERGED from com.android.support:appcompat-v7:21.0.3:16:5
 MERGED from com.android.support:support-v4:21.0.3:16:5
 MERGED from com.facebook.android:facebook-android-sdk:3.21.1:24:5
 MERGED from com.android.support:support-v4:21.0.3:16:5
-MERGED from step-android-service.libraries:MaterialDesign:unspecified:11:5
-MERGED from com.android.support:support-v4:21.0.3:16:5
 	android:label
-		ADDED from AndroidManifest.xml:30:9
+		ADDED from AndroidManifest.xml:33:9
 	android:allowBackup
-		ADDED from AndroidManifest.xml:28:9
-	android:icon
-		ADDED from AndroidManifest.xml:29:9
-	android:theme
 		ADDED from AndroidManifest.xml:31:9
+	android:icon
+		ADDED from AndroidManifest.xml:32:9
+	android:theme
+		ADDED from AndroidManifest.xml:34:9
 	android:name
-		ADDED from AndroidManifest.xml:27:9
+		ADDED from AndroidManifest.xml:30:9
 activity#com.discover.step.ui.MainActivity
-ADDED from AndroidManifest.xml:32:9
+ADDED from AndroidManifest.xml:35:9
 	android:screenOrientation
-		ADDED from AndroidManifest.xml:35:13
+		ADDED from AndroidManifest.xml:38:13
 	android:label
-		ADDED from AndroidManifest.xml:34:13
+		ADDED from AndroidManifest.xml:37:13
 	android:name
-		ADDED from AndroidManifest.xml:33:13
+		ADDED from AndroidManifest.xml:36:13
 meta-data#com.facebook.sdk.ApplicationId
-ADDED from AndroidManifest.xml:38:9
-	android:name
-		ADDED from AndroidManifest.xml:39:13
-	android:value
-		ADDED from AndroidManifest.xml:40:13
-meta-data#com.google.android.maps.v2.API_KEY
 ADDED from AndroidManifest.xml:41:9
 	android:name
 		ADDED from AndroidManifest.xml:42:13
 	android:value
 		ADDED from AndroidManifest.xml:43:13
-meta-data#com.google.android.gms.version
+meta-data#com.google.android.maps.v2.API_KEY
 ADDED from AndroidManifest.xml:44:9
-MERGED from com.google.android.gms:play-services:6.5.87:21:9
 	android:name
 		ADDED from AndroidManifest.xml:45:13
 	android:value
 		ADDED from AndroidManifest.xml:46:13
+meta-data#com.google.android.gms.version
+ADDED from AndroidManifest.xml:47:9
+MERGED from com.google.android.gms:play-services:6.5.87:21:9
+	android:name
+		ADDED from AndroidManifest.xml:48:13
+	android:value
+		ADDED from AndroidManifest.xml:49:13
 uses-library#com.google.android.maps
-ADDED from AndroidManifest.xml:48:9
+ADDED from AndroidManifest.xml:51:9
 	android:name
-		ADDED from AndroidManifest.xml:48:23
+		ADDED from AndroidManifest.xml:51:23
 activity#com.discover.step.ui.SplashActivity
-ADDED from AndroidManifest.xml:50:9
+ADDED from AndroidManifest.xml:53:9
 	android:theme
-		ADDED from AndroidManifest.xml:52:13
+		ADDED from AndroidManifest.xml:55:13
 	android:name
-		ADDED from AndroidManifest.xml:51:13
+		ADDED from AndroidManifest.xml:54:13
 intent-filter#android.intent.action.MAIN+android.intent.category.LAUNCHER
-ADDED from AndroidManifest.xml:53:13
+ADDED from AndroidManifest.xml:56:13
 action#android.intent.action.MAIN
-ADDED from AndroidManifest.xml:54:17
+ADDED from AndroidManifest.xml:57:17
 	android:name
-		ADDED from AndroidManifest.xml:54:25
+		ADDED from AndroidManifest.xml:57:25
 category#android.intent.category.LAUNCHER
-ADDED from AndroidManifest.xml:56:17
+ADDED from AndroidManifest.xml:59:17
 	android:name
-		ADDED from AndroidManifest.xml:56:27
+		ADDED from AndroidManifest.xml:59:27
 service#com.discover.step.async.GPSTrackerService
-ADDED from AndroidManifest.xml:60:9
+ADDED from AndroidManifest.xml:63:9
 	android:name
-		ADDED from AndroidManifest.xml:60:18
+		ADDED from AndroidManifest.xml:63:18
 intent-filter#com.discover.step.async.GPSTrackerService
-ADDED from AndroidManifest.xml:61:13
+ADDED from AndroidManifest.xml:64:13
 action#com.discover.step.async.GPSTrackerService
-ADDED from AndroidManifest.xml:62:17
+ADDED from AndroidManifest.xml:65:17
 	android:name
-		ADDED from AndroidManifest.xml:62:25
+		ADDED from AndroidManifest.xml:65:25
+service#com.discover.step.async.StepDataSyncService
+ADDED from AndroidManifest.xml:69:9
+	android:name
+		ADDED from AndroidManifest.xml:69:18
 activity#com.facebook.LoginActivity
-ADDED from AndroidManifest.xml:66:9
-	android:label
-		ADDED from AndroidManifest.xml:69:13
-	android:theme
-		ADDED from AndroidManifest.xml:68:13
-	android:name
-		ADDED from AndroidManifest.xml:67:13
-activity#com.discover.step.ui.LoginActivity
 ADDED from AndroidManifest.xml:71:9
 	android:label
+		ADDED from AndroidManifest.xml:74:13
+	android:theme
 		ADDED from AndroidManifest.xml:73:13
 	android:name
 		ADDED from AndroidManifest.xml:72:13
+activity#com.discover.step.ui.LoginActivity
+ADDED from AndroidManifest.xml:76:9
+	android:label
+		ADDED from AndroidManifest.xml:78:13
+	android:name
+		ADDED from AndroidManifest.xml:77:13
 uses-sdk
 INJECTED from AndroidManifest.xml:0:0 reason: use-sdk injection requested
 MERGED from com.android.support:appcompat-v7:21.0.3:15:5
 MERGED from com.android.support:support-v4:21.0.3:15:5
 MERGED from com.google.android.gms:play-services:6.5.87:18:5
 MERGED from com.android.support:support-v4:21.0.3:15:5
+MERGED from step-android-service.libraries:MaterialDesign:unspecified:7:5
+MERGED from com.android.support:support-v4:21.0.3:15:5
 MERGED from com.afollestad:material-dialogs:0.5.9:8:5
 MERGED from com.android.support:appcompat-v7:21.0.3:15:5
 MERGED from com.android.support:support-v4:21.0.3:15:5
 MERGED from com.facebook.android:facebook-android-sdk:3.21.1:20:5
-MERGED from com.android.support:support-v4:21.0.3:15:5
-MERGED from step-android-service.libraries:MaterialDesign:unspecified:7:5
 MERGED from com.android.support:support-v4:21.0.3:15:5
 	android:targetSdkVersion
 		INJECTED from AndroidManifest.xml:0:0

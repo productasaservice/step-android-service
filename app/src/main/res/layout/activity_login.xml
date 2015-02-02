@@ -30,7 +30,7 @@
             android:background="@drawable/selector_button_red_style_1"
             android:drawableLeft="@drawable/ic_gplus"
             android:text="@string/login_button_text"
-            android:visibility="gone" />
+            android:visibility="visible" />
     </LinearLayout>
 
     <LinearLayout

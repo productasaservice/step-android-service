@@ -1,11 +1,8 @@
 package com.discover.step.ui;
 
 import android.content.Intent;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -13,7 +10,9 @@ import android.widget.Toast;
 
 import com.discover.step.R;
 import com.discover.step.bc.ServerConnector;
+import com.discover.step.bl.AchievementManager;
 import com.discover.step.bl.UserManager;
+import com.discover.step.helper.StepHelper;
 import com.discover.step.model.User;
 import com.discover.step.social.FbHandlerV3;
 import com.discover.step.social.FbHandlerV3Listener;
@@ -41,6 +40,8 @@ public class LoginActivity extends SocialActivity {
         mFacebookLoginBt = (Button) findViewById(R.id.login_facebookBt);
         mGooglePlusLoginBt = (Button) findViewById(R.id.login_googlePlusBt);
         mProgressLl = (LinearLayout) findViewById(R.id.login_progressLl);
+
+        StepHelper.getSHA1Key();
 
         mFacebookLoginBt.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -73,9 +74,22 @@ public class LoginActivity extends SocialActivity {
                     mFacebookLoginBt.setEnabled(true);
                     isFacebookBtnClicked = true;
 
+                    //Send user data if it is not inserted into central db.
                     ServerConnector.getInstance().sendUserData(current);
 
-                    startMainActivity();
+                    //Sync User Data.
+                    final User currentUser = UserManager.getInstance().getAuthenticatedUser();
+                    ServerConnector.getInstance().getUserDataBy(currentUser.social_id,new ServerConnector.OnServerResponseListener<User>() {
+                        @Override
+                        public void onReady(User user, boolean isSuccess) {
+                            if (isSuccess) {
+                                currentUser.steps_count = user.steps_count;
+                                UserManager.getInstance().updateUser(currentUser);
+                            }
+
+                            startSplashActivity();
+                        }
+                    });
                 }
             }
 
@@ -117,7 +131,14 @@ public class LoginActivity extends SocialActivity {
      */
     private void startMainActivity() {
         startActivity(new Intent(LoginActivity.this, MainActivity.class));
+        finish();
+    }
 
+    /**
+     * Start main activity
+     */
+    private void startSplashActivity() {
+        startActivity(new Intent(LoginActivity.this, SplashActivity.class));
         finish();
     }
 }
