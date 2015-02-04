@@ -44,6 +44,9 @@ public class Day {
     }
 
     public void create() {
+        if (Session.authenticated_user_social_id == null)
+            Session.start();
+
         try {
         long now = System.currentTimeMillis();
             social_id = Session.authenticated_user_social_id;

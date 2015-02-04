@@ -22,6 +22,7 @@
             android:layout_marginBottom="20dp"
             android:background="@drawable/selector_button_blue_stlye_1"
             android:drawableLeft="@drawable/ic_facebook"
+            android:visibility="invisible"
             android:text="@string/login_button_text" />
 
         <Button
@@ -30,33 +31,42 @@
             android:background="@drawable/selector_button_red_style_1"
             android:drawableLeft="@drawable/ic_gplus"
             android:text="@string/login_button_text"
-            android:visibility="visible" />
+            android:visibility="invisible" />
     </LinearLayout>
+
+    <ImageView
+        android:id="@+id/login_logoIv"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:background="@drawable/login_ikon"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="-60dp"
+        android:layout_above="@+id/login_buttonsLl"/>
 
     <LinearLayout
         android:id="@+id/login_progressLl"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/login_buttonsLl"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingLeft="15dp"
-        android:paddingRight="15dp"
+        android:layout_marginTop="50dp"
+        android:paddingLeft="5dp"
+        android:layout_below="@+id/login_logoIv"
+        android:layout_centerHorizontal="true"
+        android:orientation="vertical"
         android:visibility="gone">
-
-        <com.gc.materialdesign.views.ProgressBarCircularIndeterminate
-            android:id="@+id/progressBarCircularIndetermininate"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_centerInParent="true"
-            android:background="@color/secondary_marker_color" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Login in progress..."
-            android:textColor="@color/secondary_marker_color"
+            android:textColor="@color/gray_style_1"
             android:textStyle="bold" />
+
+        <com.gc.materialdesign.views.ProgressBarIndeterminate
+            android:layout_width="fill_parent"
+            android:layout_height="10dp"
+            android:layout_marginTop="5dp"
+            android:layout_alignParentBottom="true"
+            android:background="#5B9BD5" />
 
     </LinearLayout>
 

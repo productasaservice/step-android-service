@@ -23,46 +23,11 @@
         android:background="@color/actionbar_divider" />
 
     <RelativeLayout
-        android:id="@+id/map_informationRl"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#99595959"
-        android:padding="10dp">
-        
-        <ImageView
-            android:id="@+id/map_info_handIv"
-            android:layout_width="150dp"
-            android:layout_height="150dp"
-            android:layout_centerVertical="true"
-            android:background="@drawable/ic_info"/>
-        
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:text="You can enable highlighted mode, if you tap on screen."
-            android:layout_marginLeft="-40dp"
-            android:layout_toRightOf="@+id/map_info_handIv"
-            android:textColor="@color/gray_style_2"
-            android:textSize="28sp"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:text="(tap here to close this)"
-            android:layout_below="@+id/map_info_handIv"
-            android:textColor="@color/gray_style_2"
-            android:textSize="18sp"/>
-        
-        </RelativeLayout>
-    
-    <RelativeLayout
         android:id="@+id/drawing_progressRl"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="visible"
-        android:background="@android:color/white">
+        android:background="@android:color/white"
+        android:visibility="visible">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -72,14 +37,36 @@
             android:layout_marginRight="10dp"
             android:background="@color/actionbar_divider" />
 
-        <com.gc.materialdesign.views.ProgressBarCircularIndeterminate
-            android:id="@+id/progressBarCircularIndetermininate"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:background="#FF9900" />
-    </RelativeLayout>  
-    
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/main_google_map_textTv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingBottom="5dp"
+                android:text="Initialize your first position"
+                android:textColor="@color/gray_style_1"
+                android:textSize="16dp" />
+
+            <com.gc.materialdesign.views.ProgressBarIndeterminate
+                android:layout_width="fill_parent"
+                android:layout_height="10dp"
+                android:layout_alignParentBottom="true"
+                android:background="#5B9BD5" />
+        </LinearLayout>
+
+        <!--<com.gc.materialdesign.views.ProgressBarCircularIndeterminate-->
+        <!--android:id="@+id/progressBarCircularIndetermininate"-->
+        <!--android:layout_width="32dp"-->
+        <!--android:layout_height="32dp"-->
+        <!--android:layout_centerInParent="true"-->
+        <!--android:background="#FF9900" />-->
+    </RelativeLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="30dp"
@@ -100,12 +87,12 @@
         android:id="@+id/buttonFloat"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="invisible"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
         android:layout_marginBottom="10dp"
         android:layout_marginRight="24dp"
         android:background="#4E75C8"
+        android:visibility="invisible"
         materialdesign:animate="false"
         materialdesign:iconDrawable="@drawable/ic_draw_my_step" />
 

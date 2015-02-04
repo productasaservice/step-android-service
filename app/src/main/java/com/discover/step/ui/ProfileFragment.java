@@ -11,6 +11,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -48,6 +52,7 @@ public class ProfileFragment extends Fragment {
     private TextView mNameTv, mStepCountTv, mStepennyCountTv;
     private ListView mLastStepPointsLv;
     private PointsAdapter mAdapter;
+    private View view;
 
     private ProgressDialog mProgressDialog;
 
@@ -62,7 +67,10 @@ public class ProfileFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_profile,container,false);
+        view = inflater.inflate(R.layout.fragment_profile,container,false);
+
+        openAnimation();
+
         profileIv = (ImageView) view.findViewById(R.id.profile_pictureIv);
         mNewiebleIv = (ImageView) view.findViewById(R.id.profile_badge_newbieIv);
         mAdvanturerIv = (ImageView) view.findViewById(R.id.profile_badge_adventurerIv);
@@ -74,10 +82,6 @@ public class ProfileFragment extends Fragment {
         mStepennyCountTv = (TextView) view.findViewById(R.id.profile_stepennyCountTv);
 
         mLastStepPointsLv = (ListView) view.findViewById(R.id.profile_last_stepsLv);
-
-//        mProgressDialog = ProgressDialog.show(getActivity(), "Loading",
-//                "Step points loading in progress...", true);
-//        mProgressDialog.setCancelable(false);
 
         //Update screen data.
         updateScreenData();
@@ -112,22 +116,8 @@ public class ProfileFragment extends Fragment {
                 mLastStepPointsLv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        List<StepPoint> stepPoints = StepManager.getInstance().getStepPointsByTimeStamp(mAdapter.getItem(position).date_ts);
-                        if (stepPoints.isEmpty()) {
-                            ServerConnector.getInstance().getStepList(Session.authenticated_user_social_id,mAdapter.getItem(position).date_ts,new ServerConnector.OnServerResponseListener<List<StepPoint>>() {
-                                @Override
-                                public void onReady(List<StepPoint> response, boolean isSuccess) {
-                                    Log.d("test--","response: " + response.size());
-                                    if (isSuccess) {
-                                        MainActivity.showMarkersOnMap(response);
-                                        ((MainActivity)getActivity()).onBackPressed();
-                                    }
-                                }
-                            });
-                        } else {
-                            MainActivity.showMarkersOnMap(stepPoints);
-                            ((MainActivity)getActivity()).onBackPressed();
-                        }
+                        MainActivity.showMarkersOnMap(mAdapter.getItem(position));
+                        ((MainActivity)getActivity()).onBackPressed();
                     }
                 });
 
@@ -147,6 +137,7 @@ public class ProfileFragment extends Fragment {
      * Update screen data.
      */
     public void updateScreenData() {
+        openAnimation();
         //redraw options menu.
         MainActivity.isOptionsMenuEnabled = false;
         getActivity().supportInvalidateOptionsMenu();
@@ -188,6 +179,43 @@ public class ProfileFragment extends Fragment {
 
         //List last step points.
         new LoadLastStepPointsTask().execute();
+    }
+
+    public void openAnimation() {
+        if (view != null) {
+            Animation anim = AnimationUtils.loadAnimation(getActivity(), R.anim.slide_down);
+            anim.setDuration(500);
+            anim.setInterpolator(new DecelerateInterpolator());
+            view.startAnimation(anim);
+        }
+    }
+
+    public void closeAnimation(final OnAnimEndListener listener) {
+        if (view != null) {
+            Animation anim = AnimationUtils.loadAnimation(getActivity(), R.anim.slide_up_and_hide);
+            anim.setDuration(500);
+            anim.setInterpolator(new AccelerateInterpolator());
+            anim.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    if (listener != null)
+                        listener.onReady();
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+                }
+            });
+            view.startAnimation(anim);
+        }
+    }
+
+    public interface OnAnimEndListener {
+        public void onReady();
     }
 
 }

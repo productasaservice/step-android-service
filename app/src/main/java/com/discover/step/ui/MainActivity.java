@@ -18,10 +18,13 @@ import android.view.MenuItem;
 
 import com.afollestad.materialdialogs.MaterialDialogCompat;
 import com.discover.step.R;
+import com.discover.step.Session;
 import com.discover.step.async.GPSTrackerService;
 import com.discover.step.async.StepDataSyncService;
 import com.discover.step.bc.DatabaseConnector;
+import com.discover.step.bc.ServerConnector;
 import com.discover.step.bl.LocationStoreProxy;
+import com.discover.step.bl.StepManager;
 import com.discover.step.interfaces.IGpsLoggerServiceClient;
 import com.discover.step.model.Day;
 import com.discover.step.model.StepPoint;
@@ -133,11 +136,17 @@ public class MainActivity extends ActionBarActivity {
     @Override
     public void onBackPressed() {
         if (profile.isVisible()) {
-            FragmentManager fm = getSupportFragmentManager();
-            fm.beginTransaction().hide(profile).commit();
+            ((ProfileFragment)profile).closeAnimation(new ProfileFragment.OnAnimEndListener() {
+                @Override
+                public void onReady() {
+                    FragmentManager fm = getSupportFragmentManager();
+                    fm.beginTransaction().hide(profile).commit();
 
-            MainActivity.isOptionsMenuEnabled = true;
-            supportInvalidateOptionsMenu();
+                    MainActivity.isOptionsMenuEnabled = true;
+                    supportInvalidateOptionsMenu();
+                }
+            });
+
             return;
         }
 
@@ -209,9 +218,24 @@ public class MainActivity extends ActionBarActivity {
         }
     };
 
-    public static void showMarkersOnMap(List<StepPoint> stepPoint) {
+    public static void showMarkersOnMap(Day day) {
         if (fragment != null) {
-            ((GoogleMapFragment) fragment).addFurtherSteps(stepPoint);
+            ((GoogleMapFragment) fragment).showInfoLayerWithText("Restoring your STEP points");
+            List<StepPoint> stepPoints = StepManager.getInstance().getStepPointsByTimeStamp(day.date_ts);
+            if (stepPoints.isEmpty()) {
+                ServerConnector.getInstance().getStepList(Session.authenticated_user_social_id,day.date_ts,new ServerConnector.OnServerResponseListener<List<StepPoint>>() {
+                    @Override
+                    public void onReady(List<StepPoint> response, boolean isSuccess) {
+                        if (isSuccess) {
+                            ((GoogleMapFragment) fragment).addFurtherSteps(response);
+                        } else {
+                            ((GoogleMapFragment) fragment).hideInfoLayer();
+                        }
+                    }
+                });
+            } else {
+                ((GoogleMapFragment) fragment).addFurtherSteps(stepPoints);
+            }
         }
     }
 }

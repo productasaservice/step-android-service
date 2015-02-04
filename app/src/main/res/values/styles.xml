@@ -25,5 +25,9 @@
         <item name="android:textSize">13sp</item>
         <item name="android:padding">8dp</item>
     </style>
+    <style name="DialogNoAnimation">
+        <item name="android:windowEnterAnimation">@anim/dialog_enter</item>
+        <item name="android:windowExitAnimation">@anim/dialog_exit</item>
+    </style>
 
 </resources>

@@ -77,6 +77,7 @@ public class StepManager {
         day.create();
 
         if (day.day_id != null) {
+            Log.d("test--","akár insertelhetek be egy új napot");
             setOrUpdateDay(day);
         }
     }

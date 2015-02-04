@@ -1,6 +1,7 @@
 package com.discover.step.ui;
 
 import android.content.Intent;
+import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 
@@ -17,7 +18,12 @@ public class SplashActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
-        new CheckUserDataInLocalDbTask().execute();
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                new CheckUserDataInLocalDbTask().execute();
+            }
+        },1000);
     }
 
     private class CheckUserDataInLocalDbTask extends SafeAsyncTask<Void,Void,Boolean> {

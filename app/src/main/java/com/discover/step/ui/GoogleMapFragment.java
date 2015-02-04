@@ -10,7 +10,12 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.discover.step.R;
@@ -57,7 +62,8 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
     private MapView mMapView;
     private GoogleMap mMap;
     private Marker mainMarker;
-    private RelativeLayout mInformationRl;
+    //private RelativeLayout mInformationRl;
+    private TextView mInformationTv;
 
     private ButtonFloat mStartDrawingBt;
     private RelativeLayout mProgressRl, mGMRootRl;
@@ -90,9 +96,12 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
         setRetainInstance(true);
         View view = inflater.inflate(R.layout.fragment_google_map,container,false);
 
-        mInformationRl = (RelativeLayout) view.findViewById(R.id.map_informationRl);
-        mStartDrawingBt = (ButtonFloat) view.findViewById(R.id.buttonFloat);
+        mInformationTv = (TextView) view.findViewById(R.id.main_google_map_textTv);
+
+        //mInformationRl = (RelativeLayout) view.findViewById(R.id.map_informationRl);
         mProgressRl = (RelativeLayout) view.findViewById(R.id.drawing_progressRl);
+
+        mStartDrawingBt = (ButtonFloat) view.findViewById(R.id.buttonFloat);
         mMapView = ((MapView) view.findViewById(R.id.drawing_mapView));
         mGMRootRl = (RelativeLayout) view.findViewById(R.id.google_map_rootRl);
 
@@ -105,19 +114,6 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
                 highlightDrawing();
             }
         });
-
-        //Show information window about highlighted mode, at first start.
-        if (!PrefManager.getInstance().isInformationScreenWasShown()) {
-            mInformationRl.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    PrefManager.getInstance().setIsInformationScreenWasShown();
-                    mInformationRl.setVisibility(View.GONE);
-                }
-            });
-        } else {
-            mInformationRl.setVisibility(View.GONE);
-        }
 
         //Initialize Session.
         Session.start();
@@ -205,11 +201,15 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
                 mMapView.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        mProgressRl.setVisibility(View.GONE);
+                        //mProgressRl.setVisibility(View.GONE);
+                        hideInfoLayer(mProgressRl);
                         //mStartDrawingBt.setVisibility(View.VISIBLE);
                         animateMainMarker();
                         MainActivity.isOptionsMenuEnabled = true;
                         getActivity().supportInvalidateOptionsMenu();
+
+                        showFunctionInfoDialog();
+
                     }
                 }, 500);
 
@@ -254,6 +254,8 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
                     .icon(new MarkerImageBuilder(mActivity.getResources()).asPrimary(false).withColor(sp.color).withAlphaEnabled(true).build())
                     .position(new LatLng(sp.latitude, sp.longitude)));
         }
+
+        hideInfoLayer(mProgressRl);
     }
 
     @Override
@@ -454,7 +456,85 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
         }
     }
 
+    public void showInfoLayerWithText(String title) {
+        mInformationTv.setText(title);
+        showInfoLayer(mProgressRl);
+    }
+
+    public void hideInfoLayer() {
+        hideInfoLayer(mProgressRl);
+    }
+
+    private void showInfoLayer(View view) {
+        view.setVisibility(View.VISIBLE);
+        Animation fadeIn = new AlphaAnimation(0, 1);
+        fadeIn.setInterpolator(new DecelerateInterpolator()); //add this
+        fadeIn.setDuration(1000);
+
+        view.startAnimation(fadeIn);
+    }
+
+    private void hideInfoLayer(final View view) {
+        Animation fadeOut = new AlphaAnimation(1, 0);
+        fadeOut.setInterpolator(new AccelerateInterpolator()); //and this
+        fadeOut.setDuration(500);
+        fadeOut.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                view.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+            }
+        });
+
+        view.startAnimation(fadeOut);
+    }
+
+    private void showFunctionInfoDialog() {
+        //Show information window about highlighted mode, at first start.
+        if (!PrefManager.getInstance().isInformationScreenWasShown()) {
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    new ShowFunctionDialog(getActivity());
+                    PrefManager.getInstance().setIsInformationScreenWasShown();
+                }
+            },1000);
+        }
+    }
+
     public interface OnMarkersLoadedFinishListener {
         public void onReady();
+    }
+
+    //just for testing.
+    private void testPoint() {
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Log.d("test--","beszúrtam egy teszt pontot");
+                Location location = new Location("valami");
+                location.setLongitude(20);
+                location.setLatitude(20);
+
+                //Create new step point instance from location.
+                StepPoint stepPoint = new StepPoint();
+                stepPoint.bindLocation(location);
+
+                //Increase step.
+                Session.increaseStep();
+
+                //Insert step point into db using proxy.
+                LocationStoreProxy.getInstance().insertStepPoint(stepPoint);
+
+                new Handler().postDelayed(this,2500);
+            }
+        }, 2500);
     }
 }

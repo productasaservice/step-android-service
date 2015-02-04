@@ -2,17 +2,25 @@ package com.discover.step.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.Menu;
 import android.view.View;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.OvershootInterpolator;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.discover.step.R;
+import com.discover.step.async.SyncAllDataTask;
 import com.discover.step.bc.ServerConnector;
-import com.discover.step.bl.AchievementManager;
+import com.discover.step.bl.PrefManager;
 import com.discover.step.bl.UserManager;
-import com.discover.step.helper.StepHelper;
 import com.discover.step.model.User;
 import com.discover.step.social.FbHandlerV3;
 import com.discover.step.social.FbHandlerV3Listener;
@@ -23,6 +31,7 @@ public class LoginActivity extends SocialActivity {
 
     private Button mFacebookLoginBt, mGooglePlusLoginBt;
     private LinearLayout mProgressLl;
+    private ImageView mLogoIv;
 
     public static boolean isFacebookBtnClicked;
     public static boolean isFacebookConnectionAttempt;
@@ -40,15 +49,23 @@ public class LoginActivity extends SocialActivity {
         mFacebookLoginBt = (Button) findViewById(R.id.login_facebookBt);
         mGooglePlusLoginBt = (Button) findViewById(R.id.login_googlePlusBt);
         mProgressLl = (LinearLayout) findViewById(R.id.login_progressLl);
+        mLogoIv = (ImageView) findViewById(R.id.login_logoIv);
 
-        StepHelper.getSHA1Key();
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                openAnimation();
+            }
+        },500);
+
+        //StepHelper.getSHA1Key();
 
         mFacebookLoginBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 try {
+                    closeAnimation();
                     isFacebookConnectionAttempt = true;
-                    mProgressLl.setVisibility(View.VISIBLE);
                     getFacebook().login();
                     mFacebookLoginBt.setEnabled(false);
                 } catch (Exception e) {
@@ -87,7 +104,7 @@ public class LoginActivity extends SocialActivity {
                                 UserManager.getInstance().updateUser(currentUser);
                             }
 
-                            startSplashActivity();
+                            syncData();
                         }
                     });
                 }
@@ -96,7 +113,7 @@ public class LoginActivity extends SocialActivity {
             @Override
             public void onDisconnected(){
                 if (isFacebookConnectionAttempt) {
-                    mProgressLl.setVisibility(View.GONE);
+                    openAnimation();
                     Toast.makeText(getApplicationContext(), "Login fail...", Toast.LENGTH_SHORT).show();
                     isFacebookConnectionAttempt = false;
                     mFacebookLoginBt.setEnabled(true);
@@ -137,8 +154,99 @@ public class LoginActivity extends SocialActivity {
     /**
      * Start main activity
      */
-    private void startSplashActivity() {
-        startActivity(new Intent(LoginActivity.this, SplashActivity.class));
-        finish();
+    private void syncData() {
+        //Download initial data.
+        if (!PrefManager.getInstance().isInitialDataSynced()) {
+            new SyncAllDataTask(new SyncAllDataTask.OnSyncReadyListener() {
+                @Override
+                public void onReady() {
+                    PrefManager.getInstance().setIsInitialDataSynced();
+                    startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                    finish();
+                }
+            }).execute();
+        } else {
+            startActivity(new Intent(LoginActivity.this, MainActivity.class));
+            finish();
+        }
+    }
+
+    private void openAnimation() {
+        mProgressLl.setVisibility(View.INVISIBLE);
+        Animation anim = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.slide_up_and_hide);
+        anim.setInterpolator(new OvershootInterpolator());
+        anim.setFillAfter(true);
+
+        Animation fadeIn = new AlphaAnimation(0, 1);
+        fadeIn.setInterpolator(new DecelerateInterpolator()); //add this
+        fadeIn.setDuration(300);
+        fadeIn.setStartOffset(100);
+        fadeIn.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                mFacebookLoginBt.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+
+        mFacebookLoginBt.startAnimation(fadeIn);
+        mLogoIv.startAnimation(anim);
+    }
+
+    private void closeAnimation() {
+        Animation anim = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.slide_down);
+        anim.setInterpolator(new OvershootInterpolator());
+        anim.setFillAfter(true);
+        anim.setDuration(400);
+        anim.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                Animation fadeIn = new AlphaAnimation(0, 1);
+                fadeIn.setInterpolator(new DecelerateInterpolator()); //add this
+                fadeIn.setDuration(300);
+                mProgressLl.startAnimation(fadeIn);
+                mProgressLl.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+        mLogoIv.startAnimation(anim);
+
+        Animation fadeOut = new AlphaAnimation(1, 0);
+        fadeOut.setInterpolator(new AccelerateInterpolator()); //add this
+        fadeOut.setDuration(100);
+        fadeOut.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                mFacebookLoginBt.setVisibility(View.INVISIBLE);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+            }
+        });
+
+        mFacebookLoginBt.startAnimation(fadeOut);
+        mLogoIv.startAnimation(anim);
     }
 }
