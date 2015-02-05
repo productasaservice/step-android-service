@@ -1,6 +1,7 @@
 package com.discover.step.ui;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
@@ -124,6 +125,10 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
         //Initialize Map.
         initMap();
 
+//        snapshot.
+//        mMapView.setDrawingCacheEnabled(true);
+//        Bitmap bmp = Bitmap.createBitmap(mMapView.getDrawingCache());
+
         return view;
     }
 
@@ -210,6 +215,11 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
 
                         showFunctionInfoDialog();
 
+                        Achievement achievement = AchievementManager.getInstance().getAchievements().get(0);
+                        if (achievement != null) {
+                            new BadgeDialog(mActivity,achievement);
+                        }
+
                     }
                 }, 500);
 
@@ -237,9 +247,10 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
             mIsUpdateNeeded = true;
         }
 
-        Achievement achievement = AchievementManager.getInstance().checkForNewBadge();
+        //Achievement achievement = AchievementManager.getInstance().checkForNewBadge();
+        Achievement achievement = AchievementManager.getInstance().getAchievements().get(0);
         if (achievement != null) {
-            Toast.makeText(mActivity,achievement.message,Toast.LENGTH_LONG).show();
+            new BadgeDialog(mActivity,achievement);
         }
     }
 
