@@ -214,12 +214,6 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
                         getActivity().supportInvalidateOptionsMenu();
 
                         showFunctionInfoDialog();
-
-                        Achievement achievement = AchievementManager.getInstance().getAchievements().get(0);
-                        if (achievement != null) {
-                            new BadgeDialog(mActivity,achievement);
-                        }
-
                     }
                 }, 500);
 

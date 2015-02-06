@@ -19,8 +19,6 @@
     <!--For Google plus login-->
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.USE_CREDENTIALS" />
-    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
-    <uses-permission android:name="android.permission.READ_PROFILE" />
 
     <uses-feature
         android:glEsVersion="0x00020000"
@@ -43,7 +41,7 @@
             android:value="@string/facebook_app_id" />
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
-            android:value="AIzaSyAEN5w24JdRWNEiteR3NxlinISodBXrfHA" />
+            android:value="AIzaSyDvXLsDzDqSJOHIDPGlLoa1Xz8qhDlNse8" />
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />

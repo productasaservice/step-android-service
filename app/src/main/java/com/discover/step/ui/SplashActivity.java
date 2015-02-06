@@ -10,6 +10,7 @@ import com.discover.step.async.SafeAsyncTask;
 import com.discover.step.async.SyncAllDataTask;
 import com.discover.step.bc.DatabaseConnector;
 import com.discover.step.bl.PrefManager;
+import com.discover.step.helper.StepHelper;
 
 public class SplashActivity extends ActionBarActivity {
 
@@ -17,6 +18,8 @@ public class SplashActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
+
+        StepHelper.getSHA1Key();
 
         new Handler().postDelayed(new Runnable() {
             @Override
