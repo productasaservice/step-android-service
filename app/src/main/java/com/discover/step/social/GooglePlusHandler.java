@@ -1,31 +1,29 @@
 package com.discover.step.social;
 
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Intent;
 import android.content.IntentSender;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 
+import com.discover.step.async.SafeAsyncTask;
 import com.discover.step.model.User;
 import com.google.android.gms.auth.GoogleAuthException;
 import com.google.android.gms.auth.GoogleAuthUtil;
-import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.Result;
 import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.plus.People;
 import com.google.android.gms.plus.Plus;
-import com.google.android.gms.plus.PlusClient;
 import com.google.android.gms.plus.model.people.Person;
 import com.google.android.gms.plus.model.people.PersonBuffer;
 
+import org.apache.http.HttpRequestFactory;
+
 import java.io.IOException;
-import java.text.ParseException;
 
 /**
  * Created by Geri on 2014.08.27..
@@ -33,9 +31,10 @@ import java.text.ParseException;
 
 public class GooglePlusHandler implements ResultCallback<People.LoadPeopleResult>, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     /*Client used to interact with Google APIs*/
-    private static GoogleApiClient mGoogleApiClient;
-    private static ConnectionResult mConnectionResult;
-    private static Person mCurrentPerson;
+    private  GoogleApiClient mGoogleApiClient;
+    private  ConnectionResult mConnectionResult;
+    private  Person mCurrentPerson;
+
     private static Activity mActivity;
     private static GooglePlusListener mListeners;
 
@@ -110,41 +109,41 @@ public class GooglePlusHandler implements ResultCallback<People.LoadPeopleResult
 
         Log.d("test--","connected");
 
-        Plus.PeopleApi.loadVisible(mGoogleApiClient, null).setResultCallback(this);
-
+//        //new vmiTask().execute();
+//
+//
+//
+//        Intent res = new Intent();
+//        res.addCategory("account:kole.geri@gmail.com");
+//        res.addCategory("scope:oauth2:https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile");
+//        res.putExtra("service", "oauth2:https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile");
+//        Bundle extra= new Bundle();
+//        extra.putString("androidPackageName","com.discover.step");
+//        res.putExtra("callerExtras",extra);
+//        res.putExtra("androidPackageName","com.discover.step");
+//        res.putExtra("authAccount","kole.geri@gmail.com");
+//
+//        String mPackage = "com.google.android.gms";
+//        String mClass = "com.google.android.gms.auth.TokenActivity";
+//        res.setComponent(new ComponentName(mPackage,mClass));
+//        mActivity.startActivityForResult(res,100);
 
        if (Plus.PeopleApi.getCurrentPerson(mGoogleApiClient) != null) {
             mCurrentPerson = Plus.PeopleApi.getCurrentPerson(mGoogleApiClient);
+       }
 
-       } else {
-            Log.d("test--","nem érem el..");
-        }
-
-        String name = Plus.AccountApi.getAccountName(mGoogleApiClient);
-
-        Log.d("test--","name: " + name);
-
-        if (Plus.PeopleApi == null) {
-            Log.d("test--","ez nulla apám..");
-        }
-
-        //task.execute((Void) null);
-
-        if(mListeners != null) {
+        if(mListeners != null && mCurrentPerson != null) {
             mListeners.onConnected(mInstance);
         }
     }
 
     @Override
     public void onConnectionSuspended(int i) {
-
-        Log.d("test--","connection suspended");
         mGoogleApiClient.connect();
     }
 
     @Override
     public void onConnectionFailed(ConnectionResult result) {
-        Log.d("test--","connection failed");
         if (!intentInProgress) {
             // Store the ConnectionResult so that we can use it later when the user clicks
             // 'sign-in'.
@@ -160,14 +159,12 @@ public class GooglePlusHandler implements ResultCallback<People.LoadPeopleResult
 
     /* A helper method to resolve the current ConnectionResult error. */
     private void resolveSignInError() {
-        Log.d("test--","resolve 1");
         if (mConnectionResult.hasResolution()) {
             try {
-                Log.d("test--","resolve 2");
                 intentInProgress = true;
-                mConnectionResult.startResolutionForResult(mActivity,RC_SIGN_IN);
+                mActivity.startIntentSenderForResult(mConnectionResult.getResolution().getIntentSender(),
+                        RC_SIGN_IN, null, 0, 0, 0);
             } catch (IntentSender.SendIntentException e) {
-                Log.d("test--","resolve 2 ex");
                 // The intent was canceled before it was sent.  Return to the default
                 // state and attempt to connect to get an updated ConnectionResult.
                 intentInProgress = false;
@@ -223,6 +220,24 @@ public class GooglePlusHandler implements ResultCallback<People.LoadPeopleResult
             PersonBuffer personBuffer = loadPeopleResult.getPersonBuffer();
 
             Log.d("test--","onResultban vagyok...");
+        }
+    }
+
+    private class vmiTask extends SafeAsyncTask<Void,Void,Void> {
+
+        @Override
+        protected Void doWorkInBackground(Void... params) throws Exception {
+//            String scope="oauth2:https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
+//            try {
+//                final String token = GoogleAuthUtil.getToken(mActivity, "kole.geri@gmail.com", scope);
+//                Log.d("test--","token: " + token);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            } catch (GoogleAuthException e) {
+//                e.printStackTrace();
+//            }
+
+            return null;
         }
     }
 }

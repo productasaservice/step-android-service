@@ -77,6 +77,9 @@ public class LoginActivity extends SocialActivity {
         mGooglePlusLoginBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                boolean it_should_work = false;
+                if (!it_should_work)
+                            return;
 
                 getGooglePlus().login();
             }
@@ -127,7 +130,22 @@ public class LoginActivity extends SocialActivity {
                 User current = googleplus.getUser();
                 UserManager.getInstance().doLogin(current);
 
-                startMainActivity();
+                //Send user data if it is not inserted into central db.
+                ServerConnector.getInstance().sendUserData(current);
+
+                //Sync User Data.
+                final User currentUser = UserManager.getInstance().getAuthenticatedUser();
+                ServerConnector.getInstance().getUserDataBy(currentUser.social_id,new ServerConnector.OnServerResponseListener<User>() {
+                    @Override
+                    public void onReady(User user, boolean isSuccess) {
+                        if (isSuccess) {
+                            currentUser.steps_count = user.steps_count;
+                            UserManager.getInstance().updateUser(currentUser);
+                        }
+
+                        syncData();
+                    }
+                });
             }
 
             @Override
@@ -181,24 +199,12 @@ public class LoginActivity extends SocialActivity {
         fadeIn.setInterpolator(new DecelerateInterpolator()); //add this
         fadeIn.setDuration(300);
         fadeIn.setStartOffset(100);
-        fadeIn.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-                mFacebookLoginBt.setVisibility(View.VISIBLE);
-            }
-
-            @Override
-            public void onAnimationEnd(Animation animation) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-
-            }
-        });
 
         mFacebookLoginBt.startAnimation(fadeIn);
+        mFacebookLoginBt.setVisibility(View.VISIBLE);
+        mGooglePlusLoginBt.startAnimation(fadeIn);
+        mGooglePlusLoginBt.setVisibility(View.VISIBLE);
+
         mLogoIv.startAnimation(anim);
     }
 
@@ -239,6 +245,7 @@ public class LoginActivity extends SocialActivity {
             @Override
             public void onAnimationEnd(Animation animation) {
                 mFacebookLoginBt.setVisibility(View.INVISIBLE);
+                mGooglePlusLoginBt.setVisibility(View.INVISIBLE);
             }
 
             @Override
@@ -247,6 +254,7 @@ public class LoginActivity extends SocialActivity {
         });
 
         mFacebookLoginBt.startAnimation(fadeOut);
+        mGooglePlusLoginBt.startAnimation(fadeOut);
         mLogoIv.startAnimation(anim);
     }
 }
