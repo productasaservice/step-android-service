@@ -30,7 +30,7 @@ public class SocialActivity extends ActionBarActivity {
         mFacebook = FbHandlerV3.getInstance(SocialActivity.this);
         mFacebook.setActivity(this);
         mFacebook.create(savedInstanceState);
-        mFacebook.addPermissions(new String[]{"public_profile","email"});
+        mFacebook.addPermissions(new String[]{"public_profile","email","user_friends"});
     }
 
     private void initGooglePlus() {
@@ -47,6 +47,8 @@ public class SocialActivity extends ActionBarActivity {
     protected void onResume() {
         super.onResume();
         mFacebook.resume();
+        Log.d("test--","meghívva");
+        mFacebook.checkForDeepLinking();
     }
 
     @Override

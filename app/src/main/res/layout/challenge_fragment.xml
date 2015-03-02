@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.discover.step.util.LocableScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/challenge_locableSc"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="10dp">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:id="@+id/profile_badge_dividerLl"
+                android:layout_width="match_parent"
+                android:layout_height="16dp"
+                android:background="@color/secondary_marker_color"
+                android:orientation="horizontal" />
+
+            <ImageView
+                android:layout_width="60dp"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/profile_badge_dividerLl"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="-4dp"
+                android:background="@drawable/arrow" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:text="CREATE NEW CHALLENGE"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="5dp"
+                android:layout_weight="0.5"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Type"
+                    android:textColor="@color/gray_style_2"
+                    android:textStyle="bold" />
+
+                <Spinner
+                    android:id="@+id/challenge_typeSp"
+                    android:layout_width="match_parent"
+                    android:layout_height="45dp"
+                    android:background="@drawable/spinner_bg_selector" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_weight="0.5"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Duration"
+                    android:textColor="@color/gray_style_2"
+                    android:textStyle="bold" />
+
+                <Spinner
+                    android:id="@+id/challenge_durationSp"
+                    android:layout_width="match_parent"
+                    android:layout_height="45dp"
+                    android:background="@drawable/spinner_bg_selector" />
+
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:text="Bet"
+            android:textColor="@color/gray_style_2"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/challenge_betEt"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:textColor="@color/actionbar_divider"
+            android:background="@drawable/shape_edit_text"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:singleLine="true" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:text="Message"
+            android:textColor="@color/gray_style_2"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/challenge_messageEt"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:textColor="@color/actionbar_divider"
+            android:background="@drawable/shape_edit_text"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp" />
+
+        <LinearLayout
+            android:id="@+id/challenge_mapLl"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Select place"
+                android:textColor="@color/gray_style_2"
+                android:textStyle="bold" />
+
+            <com.google.android.gms.maps.MapView
+                android:id="@+id/challenge_mapView"
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+                android:clickable="true" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/challenge_startBt"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:layout_marginBottom="15dp"
+            android:layout_marginTop="15dp"
+            android:background="@drawable/button_bg_shape"
+            android:text="START"
+            android:textColor="@drawable/blue_background_selector" />
+    </LinearLayout>
+</com.discover.step.util.LocableScrollView >

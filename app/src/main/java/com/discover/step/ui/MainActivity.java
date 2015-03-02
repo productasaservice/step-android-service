@@ -26,18 +26,21 @@ import com.discover.step.bc.ServerConnector;
 import com.discover.step.bl.LocationStoreProxy;
 import com.discover.step.bl.StepManager;
 import com.discover.step.interfaces.IGpsLoggerServiceClient;
+import com.discover.step.model.Challenge;
 import com.discover.step.model.Day;
 import com.discover.step.model.StepPoint;
+import com.discover.step.social.FbHandlerV3;
+import com.facebook.widget.FriendPickerFragment;
 
 import java.util.List;
 
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends SocialActivity {
 
     private static final int GPS_REQUEST_CODE = 695;
     private static final String TAG = "Main Activity";
 
-    private static Fragment fragment, profile;
+    private static Fragment fragment, profile, challenge;
     private GPSTrackerService trackingService;
     private Intent serviceIntent;
 
@@ -52,6 +55,7 @@ public class MainActivity extends ActionBarActivity {
 
         fragment = new GoogleMapFragment();
         profile = new ProfileFragment();
+        challenge = new ChallengeFragment();
 
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.map_layoutFl, fragment).commit();
@@ -63,6 +67,8 @@ public class MainActivity extends ActionBarActivity {
         if ( !manager.isProviderEnabled( LocationManager.GPS_PROVIDER ) ) {
             buildAlertMessageNoGps();
         }
+
+        //FbHandlerV3.getInstance(this).sendChallenge();
     }
 
     private void initActionBar() {
@@ -117,17 +123,29 @@ public class MainActivity extends ActionBarActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_profile) {
-            if (profile.isAdded() && profile.isHidden()) {
-                getSupportFragmentManager().beginTransaction()
-                        .show(profile).commit();
+//            if (profile.isAdded() && profile.isHidden()) {
+//                getSupportFragmentManager().beginTransaction()
+//                        .show(profile).commit();
+//
+//                ((ProfileFragment) profile).updateScreenData();
+//            } else {
+//                getSupportFragmentManager().beginTransaction()
+//                        .add(R.id.content_layoutFl, profile).commit();
+//            }
 
-                ((ProfileFragment) profile).updateScreenData();
-            } else {
-                getSupportFragmentManager().beginTransaction()
-                        .add(R.id.content_layoutFl, profile).commit();
-            }
+            FbHandlerV3.getInstance(this).sendChallenge();
 
             return true;
+        } else if (id == R.id.action_challenge) {
+            if (challenge.isAdded() && challenge.isHidden()) {
+                getSupportFragmentManager().beginTransaction()
+                        .show(challenge).commit();
+
+                //((Challenge) challenge).updateScreenData();
+            } else {
+                getSupportFragmentManager().beginTransaction()
+                        .add(R.id.content_layoutFl, challenge).commit();
+            }
         }
 
         return super.onOptionsItemSelected(item);

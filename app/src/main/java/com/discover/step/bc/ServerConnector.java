@@ -6,6 +6,7 @@ import com.discover.step.bl.StepManager;
 import com.discover.step.bl.UserManager;
 import com.discover.step.model.Achievement;
 import com.discover.step.model.Badge;
+import com.discover.step.model.Challenge;
 import com.discover.step.model.Day;
 import com.discover.step.model.StepPoint;
 import com.discover.step.model.User;
@@ -208,6 +209,89 @@ public class ServerConnector {
                 if (listener == null) return;
 
                 listener.onReady(stepPoints,e == null);
+            }
+        });
+    }
+
+    /**
+     * Start a new challenge.
+     * @param challenge
+     */
+    public void startNewChallenge(Challenge challenge) {
+        challenge.toParseObject().saveInBackground();
+    }
+
+    public void getChallengeByChallengeId(String challengeId, final OnServerResponseListener<Challenge> listener) {
+        ParseQuery<ParseObject> query = ParseQuery.getQuery("Challange");
+        query.whereEqualTo("challange_id", challengeId);
+        query.findInBackground(new FindCallback<ParseObject>() {
+            public void done(List<ParseObject> parse_challenge, ParseException e) {
+                Challenge challenge = null;
+                if (e == null) {
+                    challenge = new Challenge(parse_challenge.get(0));
+
+                } else {
+                    Log.d("Challenge", "Error: " + e.getMessage());
+                }
+
+                if (listener != null) {
+                    listener.onReady(challenge,e == null);
+                }
+            }
+        });
+    }
+
+    public void getChallengeById(String id, final OnServerResponseListener<List<Challenge>> listener) {
+        ParseQuery<ParseObject> query = ParseQuery.getQuery("Challange");
+        query.whereEqualTo("owner_id", id);
+        query.whereEqualTo("opoment_one_id", id);
+        query.whereEqualTo("opoment_two_id", id);
+        query.whereEqualTo("opoment_three_id", id);
+        query.findInBackground(new FindCallback<ParseObject>() {
+            public void done(List<ParseObject> challenge, ParseException e) {
+                List<Challenge> challengeList = new ArrayList<Challenge>();
+                if (e == null) {
+                    for (ParseObject o : challenge) {
+                        challengeList.add(new Challenge(o));
+                    }
+                } else {
+                    Log.d("Challenge", "Error: " + e.getMessage());
+                }
+
+                if (listener != null) {
+                    listener.onReady(challengeList,e == null);
+                }
+            }
+        });
+    }
+
+    public void acceptChallengeRequest(String challengeId, final String user_id, final OnServerResponseListener<Boolean> listener) {
+        ParseQuery<ParseObject> query = ParseQuery.getQuery("Challange");
+        query.whereEqualTo("challange_id", challengeId);
+        query.findInBackground(new FindCallback<ParseObject>() {
+            public void done(List<ParseObject> challengeList, ParseException e) {
+                boolean isAcceptSuccessful = false;
+                if (challengeList != null && !challengeList.isEmpty()) {
+                    ParseObject object = challengeList.get(0);
+                    Challenge challenge = new Challenge(object);
+
+                    if (challenge.opoment_one_id.equalsIgnoreCase("empty")) {
+                        isAcceptSuccessful = true;
+                        challenge.opoment_one_id = user_id;
+                    } else if (challenge.opoment_two_id.equalsIgnoreCase("empty")) {
+                        isAcceptSuccessful = true;
+                        challenge.opoment_two_id = user_id;
+                    } else if (challenge.opoment_three_id.equalsIgnoreCase("empty")) {
+                        isAcceptSuccessful = true;
+                        challenge.opoment_three_id = user_id;
+                    }
+
+                    challenge.toParseObject().saveInBackground();
+                }
+
+                if (listener != null) {
+                    listener.onReady(isAcceptSuccessful,e == null);
+                }
             }
         });
     }

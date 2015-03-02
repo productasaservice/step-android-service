@@ -1,22 +1,44 @@
 package com.discover.step.social;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Toast;
 
+import com.discover.step.R;
 import com.discover.step.model.User;
+import com.discover.step.ui.MainActivity;
 import com.facebook.FacebookException;
+import com.facebook.FacebookOperationCanceledException;
+import com.facebook.FacebookRequestError;
+import com.facebook.HttpMethod;
 import com.facebook.Request;
 import com.facebook.Response;
 import com.facebook.Session;
 import com.facebook.SessionLoginBehavior;
 import com.facebook.SessionState;
 import com.facebook.UiLifecycleHelper;
+import com.facebook.model.GraphMultiResult;
+import com.facebook.model.GraphObject;
+import com.facebook.model.GraphObjectList;
 import com.facebook.model.GraphUser;
 import com.facebook.widget.WebDialog;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.text.ParseException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by Geri on 2014.06.19..
@@ -27,6 +49,7 @@ public class FbHandlerV3 {
     private static UiLifecycleHelper mUiHelper;
     private static GraphUser mCurrentUser = null;
     private static String[] mPermissions = null;
+    private static boolean isFriendListRequested = false;
 
     private static Activity mActivity;
 
@@ -34,6 +57,10 @@ public class FbHandlerV3 {
         @Override
         public void call(Session session, SessionState state, Exception exception) {
             onSessionStateChange(session, state, exception);
+            if (state.isOpened() && isFriendListRequested) {
+                isFriendListRequested = false;
+                sendChallenge();
+            }
         }
     };
 
@@ -172,7 +199,8 @@ public class FbHandlerV3 {
         user.first_name = mCurrentUser.getFirstName();
         user.last_name = mCurrentUser.getLastName();
 
-        if (mCurrentUser.asMap().get("email").toString() != null) {
+
+        if (mCurrentUser.asMap().get("email") != null) {
             user.email = mCurrentUser.asMap().get("email").toString();
         }
 
@@ -242,8 +270,179 @@ public class FbHandlerV3 {
         feedDialog.show();
     }
 
+    public void getRequestData(final String inRequestId) {
+        // Create a new request for an HTTP GET with the
+        // request ID as the Graph path.
+        Request request = new Request(Session.getActiveSession(),
+                inRequestId, null, HttpMethod.GET, new Request.Callback() {
+
+            @Override
+            public void onCompleted(Response response) {
+                // Process the returned response
+                GraphObject graphObject = response.getGraphObject();
+                FacebookRequestError error = response.getError();
+                // Default message
+                String message = "Incoming request";
+                if (graphObject != null) {
+                    // Check if there is extra data
+                    if (graphObject.getProperty("data") != null) {
+                        try {
+                            // Get the data, parse info to get the key/value info
+                            JSONObject dataObject =
+                                    new JSONObject((String)graphObject.getProperty("data"));
+                            // Get the value for the key - badge_of_awesomeness
+                            String badge =
+                                    dataObject.getString("badge_of_awesomeness");
+                            // Get the value for the key - social_karma
+                            String karma =
+                                    dataObject.getString("social_karma");
+                            // Get the sender's name
+                            JSONObject fromObject =
+                                    (JSONObject) graphObject.getProperty("from");
+                            String sender = fromObject.getString("name");
+                            String title = sender+" sent you a gift";
+                            // Create the text for the alert based on the sender
+                            // and the data
+                            message = title + "\n\n" +
+                                    "Badge: " + badge +
+                                    " Karma: " + karma;
+                        } catch (JSONException e) {
+                            message = "Error getting request info";
+                        }
+                    } else if (error != null) {
+                        message = "Error getting request info";
+                    }
+                }
+                Toast.makeText(mActivity.getApplicationContext(),
+                        message,
+                        Toast.LENGTH_LONG).show();
+            }
+        });
+        // Execute the request asynchronously.
+        Request.executeBatchAsync(request);
+    }
+
+    private void deleteRequest(String inRequestId) {
+        // Create a new request for an HTTP delete with the
+        // request ID as the Graph path.
+        Request request = new Request(Session.getActiveSession(),
+                inRequestId, null, HttpMethod.DELETE, new Request.Callback() {
+
+            @Override
+            public void onCompleted(Response response) {
+                // Show a confirmation of the deletion
+                // when the API call completes successfully.
+                Toast.makeText(mActivity.getApplicationContext(), "Request deleted",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+        // Execute the request asynchronously.
+        Request.executeBatchAsync(request);
+    }
+
+    public void sendChallenge() {
+        Bundle params = new Bundle();
+        params.putString("message", "I just smashed " + 0 +
+                " friends! Can you beat it?");
+        params.putString("data",
+                "{\"badge_of_awesomeness\":\"1\"," +
+                        "\"social_karma\":\"5\"}");
+
+        showDialogWithoutNotificationBar("apprequests", params);
+    }
+
+    private void showDialogWithoutNotificationBar(String dialogAction, Bundle dialogParams) {
+        Session session = Session.getActiveSession();
+        if (session != null && (session.isOpened() || session.isClosed())) {
+
+        WebDialog dialog = new WebDialog.Builder(mActivity, Session.getActiveSession(), dialogAction, dialogParams).
+                setOnCompleteListener(new WebDialog.OnCompleteListener() {
+                    @Override
+                    public void onComplete(Bundle values, FacebookException error) {
+                        if (error != null && !(error instanceof FacebookOperationCanceledException)) {
+//                            ((HomeActivity)getActivity()).
+//                                    showError(getResources().getString(R.string.network_error), false);
+                        }
+
+                    }
+                }).build();
+
+        Window dialog_window = dialog.getWindow();
+        dialog_window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+        WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+//        dialogAction = action;
+//        dialogParams = params;
+        dialog.show();
+        } else {
+            isFriendListRequested = true;
+            Session.openActiveSession(mActivity, true, callback);
+        }
+    }
+
+    public void getFriendsList() {
+        Session session = Session.getActiveSession();
+        if (session != null && (session.isOpened() || session.isClosed())) {
+
+            Request friendRequest = Request.newMyFriendsRequest(session,new Request.GraphUserListCallback() {
+                @Override
+                public void onCompleted(List<GraphUser> graphUsers, Response response) {
+                    Log.d("test--","response: " + graphUsers.size() + " re: " + response);
+                }
+            });
+            friendRequest.executeAsync();
+
+
+
+        } else {
+            isFriendListRequested = true;
+            Session.openActiveSession(mActivity, true, callback);
+        }
+
+
+    }
+
     public interface OnUserDataLoaded{
         public void onComplete(User user);
+    }
+
+    public void checkForDeepLinking() {
+        if (mCurrentUser != null) {
+            Uri target = mActivity.getIntent().getData();
+            if (target != null) {
+                Intent i = new Intent(mActivity, MainActivity.class);
+                String graphRequestIDsForSendingUser = target.getQueryParameter("request_ids");
+                String feedPostIDForSendingUser = target.getQueryParameter("challenge_brag");
+                if (graphRequestIDsForSendingUser != null) {
+                    String [] graphRequestIDsForSendingUsers = graphRequestIDsForSendingUser.split(",");
+                    String graphRequestIDForSendingUser =
+                            graphRequestIDsForSendingUsers[graphRequestIDsForSendingUsers.length-1];
+                    Bundle bundle = new Bundle();
+                    bundle.putString("request_id", graphRequestIDForSendingUser);
+                    i.putExtras(bundle);
+                    //gameLaunchedFromDeepLinking = true;
+                    mActivity.startActivityForResult(i, 0);
+
+                    Request deleteFBRequestRequest = new Request(Session.getActiveSession(),
+                            graphRequestIDForSendingUser + "_" + mCurrentUser.getId(),
+                            new Bundle(),
+                            HttpMethod.DELETE,
+                            new Request.Callback() {
+                                @Override
+                                public void onCompleted(Response response) {
+                                    FacebookRequestError error = response.getError();
+                                    if (error != null) {
+                                        Log.e("test--",
+                                                "Deleting consumed Request failed: " + error.getErrorMessage());
+                                    } else {
+                                        Log.i("test--", "Consumed Request deleted");
+                                    }
+                                }
+                            });
+                    Request.executeBatchAsync(deleteFBRequestRequest);
+                }
+            }
+        }
     }
 
 }

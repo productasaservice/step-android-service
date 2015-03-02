@@ -1,17 +1,20 @@
 package com.discover.step.ui;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.discover.step.R;
 import com.discover.step.async.SafeAsyncTask;
 import com.discover.step.async.SyncAllDataTask;
 import com.discover.step.bc.DatabaseConnector;
 import com.discover.step.bl.PrefManager;
+import com.discover.step.social.FbHandlerV3;
 
-public class SplashActivity extends ActionBarActivity {
+public class SplashActivity extends SocialActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,4 +69,19 @@ public class SplashActivity extends ActionBarActivity {
         finish();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Uri target = getIntent().getData();
+        if (target != null) {
+            String graphRequestIDsForSendingUser = target.getQueryParameter("request_ids");
+
+            String [] graphRequestIDsForSendingUsers = graphRequestIDsForSendingUser.split(",");
+            String graphRequestIDForSendingUser =
+                    graphRequestIDsForSendingUsers[graphRequestIDsForSendingUsers.length-1];
+
+            FbHandlerV3.getInstance(this).getRequestData(graphRequestIDForSendingUser);
+            Log.d("test--","target: " + target.toString());
+        }
+    }
 }

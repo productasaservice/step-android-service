@@ -47,7 +47,7 @@ public class User {
         request.put("social_id",social_id);
         request.put("first_name",first_name);
         request.put("last_name",last_name);
-        request.put("email",email);
+        request.put("email",email == null ? "" : email);
         request.put("picture_url",picture_url);
         request.put("login_type",login_type);
         request.put("step_count",steps_count);
