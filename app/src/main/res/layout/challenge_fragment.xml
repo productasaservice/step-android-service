@@ -41,6 +41,25 @@
 
         </RelativeLayout>
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:text="Title"
+            android:textColor="@color/gray_style_2"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/challenge_titleEt"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:textCursorDrawable="@null"
+            android:textColor="@color/actionbar_divider"
+            android:background="@drawable/shape_edit_text"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:singleLine="true" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -108,6 +127,7 @@
             android:background="@drawable/shape_edit_text"
             android:paddingLeft="8dp"
             android:paddingRight="8dp"
+            android:textCursorDrawable="@null"
             android:singleLine="true" />
 
         <TextView
@@ -124,6 +144,7 @@
             android:layout_height="100dp"
             android:textColor="@color/actionbar_divider"
             android:background="@drawable/shape_edit_text"
+            android:textCursorDrawable="@null"
             android:paddingLeft="8dp"
             android:paddingRight="8dp" />
 
@@ -142,11 +163,11 @@
                 android:textColor="@color/gray_style_2"
                 android:textStyle="bold" />
 
-            <com.google.android.gms.maps.MapView
+            <com.discover.step.util.StepMapView
                 android:id="@+id/challenge_mapView"
                 android:layout_width="match_parent"
-                android:layout_height="250dp"
-                android:clickable="true" />
+                android:layout_height="250dp" />
+
         </LinearLayout>
 
         <Button

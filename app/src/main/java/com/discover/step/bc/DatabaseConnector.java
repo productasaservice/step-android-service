@@ -314,7 +314,7 @@ public class DatabaseConnector extends OrmLiteSqliteOpenHelper {
         try {
             stepPointList = getDao(StepPoint.class).queryBuilder().where().eq("user_social_id",user_social_id).and().eq("isSynced",false).query();
         } catch (java.sql.SQLException e) {
-            throw new DefaultStepException("GET STEP POINTS Database operation failed");
+            throw new DefaultStepException("GET STEP POINTS Database operation failed: " + e.getMessage());
         }
         return stepPointList;
     }

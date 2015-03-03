@@ -16,4 +16,7 @@ public class Config {
 
     public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy. MMMM dd.");
     public static final SimpleDateFormat DATE_TIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+
+    //Constants
+    public static final String CONST_CHALLENGE_HAS_ENDED = "CONST_CHALLENGE_HAS_ENDED";
 }

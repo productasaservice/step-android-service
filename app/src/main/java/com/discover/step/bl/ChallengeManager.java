@@ -21,6 +21,7 @@ public class ChallengeManager {
 
     public void createNewChallenge(Challenge challenge) {
         ServerConnector.getInstance().startNewChallenge(challenge);
+        NotificationManager.getInstance().setNotificationForChallenge(challenge);
     }
 
     public void downloadChallengeByUserId(String userId) {

@@ -140,8 +140,7 @@ public class MainActivity extends SocialActivity {
             if (challenge.isAdded() && challenge.isHidden()) {
                 getSupportFragmentManager().beginTransaction()
                         .show(challenge).commit();
-
-                //((Challenge) challenge).updateScreenData();
+                ((ChallengeFragment) challenge).updateScreenData();
             } else {
                 getSupportFragmentManager().beginTransaction()
                         .add(R.id.content_layoutFl, challenge).commit();
@@ -164,6 +163,13 @@ public class MainActivity extends SocialActivity {
                     supportInvalidateOptionsMenu();
                 }
             });
+
+            return;
+        }
+
+        if (challenge.isVisible()) {
+            FragmentManager fm = getSupportFragmentManager();
+            fm.beginTransaction().hide(challenge).commit();
 
             return;
         }
@@ -254,6 +260,12 @@ public class MainActivity extends SocialActivity {
             } else {
                 ((GoogleMapFragment) fragment).addFurtherSteps(stepPoints);
             }
+        }
+    }
+
+    public void addChallengePoint(Challenge challenge) {
+        if (fragment != null) {
+            ((GoogleMapFragment) fragment).addChallengePoint(challenge);
         }
     }
 }

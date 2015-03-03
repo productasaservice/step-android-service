@@ -1,12 +1,17 @@
 package com.discover.step.ui;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,6 +24,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.discover.step.Config;
 import com.discover.step.R;
 import com.discover.step.Session;
 import com.discover.step.async.SafeAsyncTask;
@@ -32,6 +38,7 @@ import com.discover.step.bl.UserManager;
 import com.discover.step.ex.DefaultStepException;
 import com.discover.step.interfaces.IGpsLoggerServiceClient;
 import com.discover.step.model.Achievement;
+import com.discover.step.model.Challenge;
 import com.discover.step.model.Day;
 import com.discover.step.model.StepPoint;
 import com.discover.step.model.User;
@@ -63,7 +70,6 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
     private MapView mMapView;
     private GoogleMap mMap;
     private Marker mainMarker;
-    //private RelativeLayout mInformationRl;
     private TextView mInformationTv;
 
     private ButtonFloat mStartDrawingBt;
@@ -75,6 +81,7 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
 
     //Store missing locations.
     List<StepPoint> missingStepPoints;
+    List<Challenge> challengePoints;
 
     Location lastLocation;
     Location currentLocation;
@@ -85,6 +92,28 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
     private static int STEP_COUNT = 0;
 
     MainActivity mActivity;
+
+    BroadcastReceiver mChallengeEndedBr = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Challenge challenge = (Challenge) intent.getSerializableExtra("challenge");
+            if (challenge != null) {
+                int index = -1;
+                for (int i = 0; i< challengePoints.size();i++) {
+                    if (challengePoints.get(i).challange_id.equalsIgnoreCase(challenge.challange_id)) {
+                        index = i;
+                        break;
+                    }
+                }
+
+                if (index > -1) {
+                    challengePoints.remove(index);
+                }
+
+                updateChallengePoints();
+            }
+        }
+    };
 
     @Override
     public void onAttach(Activity activity) {
@@ -107,6 +136,7 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
         mGMRootRl = (RelativeLayout) view.findViewById(R.id.google_map_rootRl);
 
         missingStepPoints = new ArrayList<>();
+        challengePoints = new ArrayList<>();
 
         //Highlighted mode switch button
         mStartDrawingBt.setOnClickListener(new View.OnClickListener() {
@@ -166,7 +196,7 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
 
                 //Add main marker.
                 mainMarker = mMap.addMarker(new MarkerOptions()
-                        .icon(new MarkerImageBuilder(mActivity.getResources()).asPrimary(false).withColor(R.color.main_marker_color).build())
+                        .icon(new MarkerImageBuilder(mActivity.getResources()).asPrimary(true).withColor(R.color.main_marker_color).build())
                         .position(location));
 
                 //Limit min zoom level.
@@ -209,16 +239,11 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
                         //mProgressRl.setVisibility(View.GONE);
                         hideInfoLayer(mProgressRl);
                         //mStartDrawingBt.setVisibility(View.VISIBLE);
-                        animateMainMarker();
+                        //animateMainMarker();
                         MainActivity.isOptionsMenuEnabled = true;
                         getActivity().supportInvalidateOptionsMenu();
 
                         showFunctionInfoDialog();
-
-//                        Achievement achievement = AchievementManager.getInstance().getAchievements().get(0);
-//                        if (achievement != null) {
-//                            new BadgeDialog(mActivity,achievement);
-//                        }
 
                     }
                 }, 500);
@@ -247,8 +272,7 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
             mIsUpdateNeeded = true;
         }
 
-        //Achievement achievement = AchievementManager.getInstance().checkForNewBadge();
-        Achievement achievement = AchievementManager.getInstance().getAchievements().get(0);
+        Achievement achievement = AchievementManager.getInstance().checkForNewBadge();
         if (achievement != null) {
             new BadgeDialog(mActivity,achievement);
         }
@@ -259,7 +283,6 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
      * @param stepPoints
      */
     public void addFurtherSteps(List<StepPoint> stepPoints) {
-        Log.d("test--","further stpe:" + stepPoints.size());
         for (StepPoint sp : stepPoints) {
             mMap.addMarker(new MarkerOptions()
                     .icon(new MarkerImageBuilder(mActivity.getResources()).asPrimary(false).withColor(sp.color).withAlphaEnabled(true).build())
@@ -267,6 +290,28 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
         }
 
         hideInfoLayer(mProgressRl);
+    }
+
+    public void addChallengePoint(Challenge challenge) {
+        if (mMap == null)
+            return;
+
+        challengePoints.add(challenge);
+        mMap.addMarker(new MarkerOptions()
+                .icon(new MarkerImageBuilder(mActivity.getResources()).asPrimary(false).withColor(challenge.color).withSize(10).build())
+                .position(new LatLng(challenge.lat, challenge.lng)));
+    }
+
+    public void updateChallengePoints() {
+        if (mMap == null)
+            return;
+
+        mMap.clear();
+        for (Challenge challenge : challengePoints) {
+            mMap.addMarker(new MarkerOptions()
+                    .icon(new MarkerImageBuilder(mActivity.getResources()).asPrimary(false).withColor(challenge.color).withSize(10).build())
+                    .position(new LatLng(challenge.lat, challenge.lng)));
+        }
     }
 
     @Override
@@ -283,9 +328,13 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
         }
         super.onResume();
 
+        //Start broadcast listener.
+        LocalBroadcastManager.getInstance(mActivity).registerReceiver(mChallengeEndedBr,new IntentFilter(Config.CONST_CHALLENGE_HAS_ENDED));
+        updateChallengePoints();
+
         //Load gps points witch hadn't draw to map.
         if (mIsUpdateNeeded) {
-            new DrawMarkersTask(true).execute();
+            //new DrawMarkersTask(true).execute();
             currentLocation = GPSHandlerManager.getInstance().getCurrentLocation();
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), 18));
             mainMarker.setPosition(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()));
@@ -305,6 +354,9 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
     @Override
     public void onStop() {
         super.onStop();
+
+        LocalBroadcastManager.getInstance(mActivity).unregisterReceiver(mChallengeEndedBr);
+
         mIsAppInBackground = true;
         mIsUpdateNeeded = true;
     }
@@ -370,28 +422,28 @@ public class GoogleMapFragment extends Fragment implements IGpsLoggerServiceClie
     /**
      * Set flashing animation to main marker.
      */
-    private void animateMainMarker() {
-        new Handler().postDelayed(new Runnable() {
-            boolean isPrimary = true;
-
-            @Override
-            public void run() {
-                if (isVisible()) {
-                    LatLng curr_loc = mainMarker.getPosition();
-                        if (isPrimary) {
-                            mainMarker.setIcon(new MarkerImageBuilder(mActivity.getResources()).asPrimary(true).withColor(R.color.main_marker_color).build());
-                            isPrimary = false;
-                        } else {
-                            mainMarker.setIcon(new MarkerImageBuilder(mActivity.getResources()).asPrimary(false).withColor(R.color.main_marker_color).build());
-                            isPrimary = true;
-                        }
-
-                    mainMarker.setPosition(curr_loc);
-                    new Handler().postDelayed(this, 300);
-                }
-            }
-        }, 300);
-    }
+//    private void animateMainMarker() {
+//        new Handler().postDelayed(new Runnable() {
+//            boolean isPrimary = true;
+//
+//            @Override
+//            public void run() {
+//                if (isVisible()) {
+//                    LatLng curr_loc = mainMarker.getPosition();
+//                        if (isPrimary) {
+//                            mainMarker.setIcon(new MarkerImageBuilder(mActivity.getResources()).asPrimary(true).withColor(R.color.main_marker_color).build());
+//                            isPrimary = false;
+//                        } else {
+//                            mainMarker.setIcon(new MarkerImageBuilder(mActivity.getResources()).asPrimary(false).withColor(R.color.main_marker_color).build());
+//                            isPrimary = true;
+//                        }
+//
+//                    mainMarker.setPosition(curr_loc);
+//                    new Handler().postDelayed(this, 300);
+//                }
+//            }
+//        }, 300);
+//    }
 
     public List<LatLng> getBoundingBox(final LatLng pPosition, final int pDistanceInMeters) {
 

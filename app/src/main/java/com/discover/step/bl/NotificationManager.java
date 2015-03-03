@@ -1,5 +1,6 @@
 package com.discover.step.bl;
 
+import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -7,7 +8,11 @@ import android.content.Intent;
 
 import com.discover.step.R;
 import com.discover.step.StepApplication;
+import com.discover.step.model.Challenge;
+import com.discover.step.receivers.AlarmReceiver;
 import com.discover.step.ui.MainActivity;
+
+import java.util.Calendar;
 
 /**
  * Created by Geri on 2014.11.06..
@@ -22,6 +27,7 @@ public class NotificationManager {
     private int mNotificationResId;
 
     private Context mContext;
+    private AlarmManager mAlarmManager;
     private boolean isVisible = false;
 
     private static NotificationManager mInstance = null;
@@ -35,6 +41,7 @@ public class NotificationManager {
 
     private NotificationManager() {
         mContext = StepApplication.getContext();
+        mAlarmManager = (AlarmManager) mContext.getSystemService(Context.ALARM_SERVICE);
     }
 
     public void showNotification(String hint, String description, int iconResId) {
@@ -72,5 +79,29 @@ public class NotificationManager {
 
     public boolean isEnabled() {
         return isEnabled;
+    }
+
+    /**
+     * Set favourite program notification
+     */
+    public void setNotificationForChallenge(Challenge challenge) {
+
+        if (challenge.duration > System.currentTimeMillis()) {
+            Intent intent = new Intent(mContext, AlarmReceiver.class);
+            intent.putExtra("challenge", challenge);
+
+            String id = challenge.challange_id.substring(0,5);
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(mContext, Integer.parseInt(id), intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            mAlarmManager.set(AlarmManager.RTC_WAKEUP, challenge.duration, pendingIntent);
+        }
+    }
+
+    /**
+     * Remove favourite program notification
+     */
+    public void removeNotificationForFavourite(Challenge challenge) {
+        Intent intent = new Intent(mContext, AlarmReceiver.class);
+        String id = challenge.challange_id.substring(0,5);
+        mAlarmManager.cancel(PendingIntent.getBroadcast(mContext, Integer.parseInt(id), intent, PendingIntent.FLAG_UPDATE_CURRENT));
     }
 }

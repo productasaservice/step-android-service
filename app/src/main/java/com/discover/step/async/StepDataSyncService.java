@@ -35,27 +35,27 @@ public class StepDataSyncService extends IntentService {
     @Override
     protected synchronized void onHandleIntent(Intent intent) {
         mAlarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
-        try {
-            //Get all of un syced step points.
-            unSyncedStepPoints = DatabaseConnector.getInstance().getUnSyncedStepPoints(Session.authenticated_user_social_id);
-            unSyncedDays = DatabaseConnector.getInstance().getUnSyncedDay(Session.authenticated_user_social_id);
+//        try {
+//            //Get all of un syced step points.
+////            unSyncedStepPoints = DatabaseConnector.getInstance().getUnSyncedStepPoints(Session.authenticated_user_social_id);
+////            unSyncedDays = DatabaseConnector.getInstance().getUnSyncedDay(Session.authenticated_user_social_id);
+////
+////            if (!unSyncedStepPoints.isEmpty()) {
+////                //Sync of step points.
+////                ServerConnector.getInstance().sendStepPoints(unSyncedStepPoints);
+////            }
+////
+////            if (!unSyncedDays.isEmpty()) {
+////                //Sync of days.
+////                ServerConnector.getInstance().sendDays(unSyncedDays);
+////            }
+//        } catch (DefaultStepException e) {
+//            e.printStackTrace();
+//            Log.d("StepPointsService","fail");
+//            mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + Config.UPDATE_SERVER_DATA_SYNC_ALARM_TRIGGER_AT_MILLIS, getSyncPendingIntent(StepDataSyncService.this));
+//        }
 
-            if (!unSyncedStepPoints.isEmpty()) {
-                //Sync of step points.
-                ServerConnector.getInstance().sendStepPoints(unSyncedStepPoints);
-            }
-
-            if (!unSyncedDays.isEmpty()) {
-                //Sync of days.
-                ServerConnector.getInstance().sendDays(unSyncedDays);
-            }
-        } catch (DefaultStepException e) {
-            e.printStackTrace();
-            Log.d("StepPointsService","fail");
-            mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + Config.UPDATE_SERVER_DATA_SYNC_ALARM_TRIGGER_AT_MILLIS, getSyncPendingIntent(StepDataSyncService.this));
-        }
-
-        mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + Config.UPDATE_SERVER_DATA_SYNC_ALARM_TRIGGER_AT_MILLIS, getSyncPendingIntent(StepDataSyncService.this));
+//        mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + Config.UPDATE_SERVER_DATA_SYNC_ALARM_TRIGGER_AT_MILLIS, getSyncPendingIntent(StepDataSyncService.this));
     }
 
     private PendingIntent getSyncPendingIntent(Context context) {

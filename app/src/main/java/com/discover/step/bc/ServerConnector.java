@@ -2,6 +2,7 @@ package com.discover.step.bc;
 
 import android.util.Log;
 
+import com.discover.step.bl.NotificationManager;
 import com.discover.step.bl.StepManager;
 import com.discover.step.bl.UserManager;
 import com.discover.step.model.Achievement;
@@ -284,6 +285,10 @@ public class ServerConnector {
                     } else if (challenge.opoment_three_id.equalsIgnoreCase("empty")) {
                         isAcceptSuccessful = true;
                         challenge.opoment_three_id = user_id;
+                    }
+
+                    if (isAcceptSuccessful) {
+                        NotificationManager.getInstance().setNotificationForChallenge(challenge);
                     }
 
                     challenge.toParseObject().saveInBackground();

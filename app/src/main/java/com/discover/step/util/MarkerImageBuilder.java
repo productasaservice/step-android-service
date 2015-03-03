@@ -23,6 +23,7 @@ public class MarkerImageBuilder {
     private Resources res;
     private boolean isPrimary;
     private boolean isAlphaEnabled = false;
+    private int size;
 
     private int main_color;
 
@@ -46,10 +47,16 @@ public class MarkerImageBuilder {
         return this;
     }
 
+    public MarkerImageBuilder withSize(int size) {
+        this.size = size;
+        return this;
+    }
+
     public MarkerImageBuilder(Resources res) {
         this.res = res;
         isPrimary = false;
         main_color = res.getColor(R.color.main_marker_color);
+        this.size = 5;
     }
 
     private Bitmap buildBitmap() {
@@ -60,11 +67,10 @@ public class MarkerImageBuilder {
         return BitmapDescriptorFactory.fromBitmap(buildBitmap());
     }
 
-
-    private Bitmap drawMarker() {
-        int RING_RADIUS = 7;
-        int RING_WIDTH = 1;
-        int CORE_RADIUS = 5;
+    private Bitmap drawMarker(int size) {
+        int RING_RADIUS = size + 2;
+        int RING_WIDTH = size - 4;
+        int CORE_RADIUS = size;
 
         //Draw a ring it will be the main bitmap to draw into.
         Bitmap background = drawRing(RING_RADIUS, RING_WIDTH);
@@ -80,6 +86,11 @@ public class MarkerImageBuilder {
         canvas.drawBitmap(core, (background.getWidth() - core.getWidth()) / 2, (background.getHeight() - core.getHeight()) / 2, paint);
 
         return background;
+    }
+
+    private Bitmap drawMarker() {
+
+        return drawMarker(size);
     }
 
 
