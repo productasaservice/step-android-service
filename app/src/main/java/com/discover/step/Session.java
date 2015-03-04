@@ -10,9 +10,10 @@ import com.discover.step.model.User;
 public class Session {
     public static String authenticated_user_social_id;
     public static int step_count;
+    public static User user;
 
     public static boolean start() {
-        User user = UserManager.getInstance().getAuthenticatedUser();
+        user = UserManager.getInstance().getAuthenticatedUser();
         if (user != null) {
             authenticated_user_social_id = UserManager.getInstance().getAuthenticatedUser().social_id;
             step_count = user.steps_count;

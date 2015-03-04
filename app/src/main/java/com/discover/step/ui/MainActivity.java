@@ -53,7 +53,7 @@ public class MainActivity extends SocialActivity {
 
         startService(new Intent(this, StepDataSyncService.class));
 
-        fragment = new GoogleMapFragment();
+        fragment = new CatchMapFragment();
         profile = new ProfileFragment();
         challenge = new ChallengeFragment();
 
@@ -265,7 +265,7 @@ public class MainActivity extends SocialActivity {
 
     public void addChallengePoint(Challenge challenge) {
         if (fragment != null) {
-            ((GoogleMapFragment) fragment).addChallengePoint(challenge);
+            ((CatchMapFragment) fragment).addChallengePoint(challenge);
         }
     }
 }
