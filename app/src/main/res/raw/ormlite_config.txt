@@ -1,5 +1,5 @@
 #
-# generated on 2015/01/31 04:29:21
+# generated on 2015/03/07 02:59:00
 #
 # --table-start--
 dataClass=com.discover.step.model.StepPoint
@@ -80,6 +80,12 @@ fieldName=isLoggedIn
 # --field-start--
 fieldName=steps_count
 # --field-end--
+# --field-start--
+fieldName=latitude
+# --field-end--
+# --field-start--
+fieldName=longitude
+# --field-end--
 # --table-fields-end--
 # --table-end--
 #################################
@@ -105,6 +111,68 @@ fieldName=date_ts
 # --field-end--
 # --field-start--
 fieldName=isSynced
+# --field-end--
+# --table-fields-end--
+# --table-end--
+#################################
+# --table-start--
+dataClass=com.discover.step.model.Challenge
+tableName=challenge
+# --table-fields-start--
+# --field-start--
+fieldName=id
+generatedId=true
+# --field-end--
+# --field-start--
+fieldName=title
+# --field-end--
+# --field-start--
+fieldName=challange_id
+# --field-end--
+# --field-start--
+fieldName=owner_id
+# --field-end--
+# --field-start--
+fieldName=winner_id
+# --field-end--
+# --field-start--
+fieldName=color
+# --field-end--
+# --field-start--
+fieldName=lat
+# --field-end--
+# --field-start--
+fieldName=lng
+# --field-end--
+# --field-start--
+fieldName=opoment_one_id
+# --field-end--
+# --field-start--
+fieldName=opoment_two_id
+# --field-end--
+# --field-start--
+fieldName=opoment_three_id
+# --field-end--
+# --field-start--
+fieldName=duration
+# --field-end--
+# --field-start--
+fieldName=type
+# --field-end--
+# --field-start--
+fieldName=message
+# --field-end--
+# --field-start--
+fieldName=bet
+# --field-end--
+# --field-start--
+fieldName=isChallengeRequestNoticed
+# --field-end--
+# --field-start--
+fieldName=isChallengeOver
+# --field-end--
+# --field-start--
+fieldName=isDeleted
 # --field-end--
 # --table-fields-end--
 # --table-end--

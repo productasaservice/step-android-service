@@ -30,7 +30,7 @@ public class GPSHandlerManager implements
     /**
      * The desired interval for location updates. Inexact. Updates may be more or less frequent.
      */
-    public static final long UPDATE_INTERVAL_IN_MILLISECONDS = 1500;
+    public static final long UPDATE_INTERVAL_IN_MILLISECONDS = 10000;   //10 sec
 
     /**
      * The fastest rate for active location updates. Exact. Updates will never be more frequent

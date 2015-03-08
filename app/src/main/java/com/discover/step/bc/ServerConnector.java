@@ -2,6 +2,7 @@ package com.discover.step.bc;
 
 import android.util.Log;
 
+import com.discover.step.async.SyncAllDataTask;
 import com.discover.step.bl.NotificationManager;
 import com.discover.step.bl.StepManager;
 import com.discover.step.bl.UserManager;
@@ -243,17 +244,36 @@ public class ServerConnector {
     }
 
     public void getChallengeById(String id, final OnServerResponseListener<List<Challenge>> listener) {
-        ParseQuery<ParseObject> query = ParseQuery.getQuery("Challange");
-        query.whereEqualTo("owner_id", id);
-        query.whereEqualTo("opoment_one_id", id);
-        query.whereEqualTo("opoment_two_id", id);
-        query.whereEqualTo("opoment_three_id", id);
-        query.findInBackground(new FindCallback<ParseObject>() {
+
+        List<ParseQuery<ParseObject>> queries = new ArrayList<>();
+        ParseQuery<ParseObject> owner = ParseQuery.getQuery("Challange");
+        owner.whereEqualTo("owner_id", id);
+
+        ParseQuery<ParseObject> op_1 = ParseQuery.getQuery("Challange");
+        op_1.whereEqualTo("opoment_one_id", id);
+
+        ParseQuery<ParseObject> op_2 = ParseQuery.getQuery("Challange");
+        op_2.whereEqualTo("opoment_two_id", id);
+
+        ParseQuery<ParseObject> op_3 = ParseQuery.getQuery("Challange");
+        op_3.whereEqualTo("opoment_three_id", id);
+
+        queries.add(owner);
+        queries.add(op_1);
+        queries.add(op_2);
+        queries.add(op_3);
+
+        ParseQuery<ParseObject> q = ParseQuery.or(queries);
+        q.whereGreaterThanOrEqualTo("duration",System.currentTimeMillis());
+
+        q.findInBackground(new FindCallback<ParseObject>() {
             public void done(List<ParseObject> challenge, ParseException e) {
+
                 List<Challenge> challengeList = new ArrayList<Challenge>();
                 if (e == null) {
                     for (ParseObject o : challenge) {
                         challengeList.add(new Challenge(o));
+
                     }
                 } else {
                     Log.d("Challenge", "Error: " + e.getMessage());
@@ -313,15 +333,47 @@ public class ServerConnector {
                     object.put("social_id",user.social_id);
                     object.put("first_name",user.first_name);
                     object.put("last_name",user.last_name);
-                    object.put("email",user.email);
+                    object.put("email",user.email == null ? "" : user.email);
                     object.put("picture_url",user.picture_url);
                     object.put("login_type",user.login_type);
                     object.put("step_count",user.steps_count);
+                    object.put("latitude",user.latitude + "");
+                    object.put("longitude",user.longitude + "");
+
                     object.saveInBackground();
                 }
             }
         });
     }
+public void updateChallenge(final Challenge challenge) {
+    ParseQuery<ParseObject> query = ParseQuery.getQuery("Challange");
+    query.whereEqualTo("challange_id", challenge.challange_id);
+    query.whereEqualTo("winner_id", "empty");
+    query.findInBackground(new FindCallback<ParseObject>() {
+        public void done(List<ParseObject> scoreList, ParseException e) {
+
+            if (scoreList != null && !scoreList.isEmpty()) {
+                ParseObject request = scoreList.get(0);
+                request.put("challange_id",challenge.challange_id);
+                request.put("owner_id",challenge.owner_id);
+                request.put("winner_id",challenge.winner_id == null ? "empty" : challenge.winner_id);
+                request.put("color",challenge.color);
+                request.put("lat",challenge.lat + "");
+                request.put("lng",challenge.lng + "");
+                request.put("opoment_one_id",challenge.opoment_one_id == null ? "empty" : challenge.opoment_one_id);
+                request.put("opoment_two_id",challenge.opoment_two_id == null ? "empty" : challenge.opoment_two_id);
+                request.put("opoment_three_id",challenge.opoment_three_id == null ? "empty" : challenge.opoment_three_id);
+                request.put("duration",challenge.duration);
+                request.put("type",challenge.type);
+                request.put("title",challenge.title);
+                request.put("message",challenge.message);
+                request.put("bet",challenge.bet);
+
+                request.saveInBackground();
+            }
+        }
+    });
+}
 
     public interface OnServerResponseListener<TResponseObject> {
         public void onReady(TResponseObject response, boolean isSuccess);

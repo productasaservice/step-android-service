@@ -6,10 +6,12 @@ import android.util.Log;
 
 import com.discover.step.Config;
 import com.discover.step.R;
+import com.discover.step.Session;
 import com.discover.step.StepApplication;
 import com.discover.step.ex.DefaultStepException;
 import com.discover.step.model.Achievement;
 import com.discover.step.model.Badge;
+import com.discover.step.model.Challenge;
 import com.discover.step.model.Day;
 import com.discover.step.model.StepPoint;
 import com.discover.step.model.User;
@@ -49,6 +51,7 @@ public class DatabaseConnector extends OrmLiteSqliteOpenHelper {
             TableUtils.createTable(connectionSource, Badge.class);
             TableUtils.createTable(connectionSource, Achievement.class);
             TableUtils.createTable(connectionSource, Day.class);
+            TableUtils.createTable(connectionSource, Challenge.class);
         } catch (SQLException e) {
             if (Config.IS_DEVELOPER_MODE) {
                 Log.d("Can't create database", e.getLocalizedMessage());
@@ -65,6 +68,11 @@ public class DatabaseConnector extends OrmLiteSqliteOpenHelper {
                 sqLiteDatabase.execSQL("ALTER TABLE 'steppoint' ADD isSynced INTEGER");
                 //create a new table.
                 TableUtils.createTable(connectionSource, Day.class);
+            } else if (old_version == 2 && new_version == 3) {
+                sqLiteDatabase.execSQL("ALTER TABLE 'user' ADD latitude REAL");
+                sqLiteDatabase.execSQL("ALTER TABLE 'user' ADD longitude REAL");
+                //create a new table.
+                TableUtils.createTable(connectionSource, Challenge.class);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -83,7 +91,13 @@ public class DatabaseConnector extends OrmLiteSqliteOpenHelper {
                 @Override
                 public Void call() throws Exception {
                     Dao<User, ?> dao = getDao(User.class);
-                    dao.createIfNotExists(user);
+                    User u = getUserBySocialId(user.social_id);
+                    if (u != null) {
+                        user.id = u.id;
+                        dao.update(user);
+                    } else {
+                        dao.create(user);
+                    }
                     return null;
                 }
             });
@@ -156,6 +170,29 @@ public class DatabaseConnector extends OrmLiteSqliteOpenHelper {
     }
 
     /**
+     * Set badge list.
+     * @param challengeList
+     * @throws DefaultStepException
+     */
+    public void setChallengeList(final List<Challenge> challengeList) throws DefaultStepException {
+        try {
+            TransactionManager.callInTransaction(getConnectionSource(), new Callable<Void>() {
+
+                @Override
+                public Void call() throws Exception {
+                    Dao<Challenge, ?> dao = getDao(Challenge.class);
+                    for (Challenge a : challengeList) {
+                        dao.createIfNotExists(a);
+                    }
+                    return null;
+                }
+            });
+        } catch (java.sql.SQLException e) {
+            throw new DefaultStepException("SET Challenge Database operation failed with error: " + e.getMessage());
+        }
+    }
+
+    /**
      * Set day list to database.
      * @param dayList
      * @throws DefaultStepException
@@ -210,6 +247,86 @@ public class DatabaseConnector extends OrmLiteSqliteOpenHelper {
             throw new DefaultStepException("GET day database operation failed");
         }
         return day != null && !day.isEmpty() ? day.get(0) :  null;
+    }
+
+    public Challenge getChallengeByChallengeId(String challengeId) throws DefaultStepException {
+        List<Challenge> challenge = null;
+        try {
+            challenge = getDao(Challenge.class).queryBuilder().where().eq("challange_id",challengeId).query();
+        } catch (java.sql.SQLException e) {
+            throw new DefaultStepException("GET Challenge of User Database operation failed");
+        }
+        return challenge != null && !challenge.isEmpty() ? challenge.get(0) :  null;
+    }
+
+    public List<Challenge> getChallengeByUserId(String userId) throws DefaultStepException {
+        List<Challenge> challenge = null;
+        try {
+            challenge = getDao(Challenge.class).queryBuilder().where().ge("duration", System.currentTimeMillis()).and().eq("owner_id", userId).or().eq("opoment_one_id",userId).or().eq("opoment_two_id",userId).or().eq("opoment_three_id",userId).query();
+        } catch (java.sql.SQLException e) {
+            throw new DefaultStepException("GET Challenge of User Database operation failed");
+        }
+        return challenge;
+    }
+
+    public void updateChallenge(final List<Challenge> challenges) throws DefaultStepException {
+        try {
+            TransactionManager.callInTransaction(getConnectionSource(), new Callable<Void>() {
+
+                @Override
+                public Void call() throws Exception {
+                    Dao<Challenge, Long> dao = getDao(Challenge.class);
+                    for (Challenge ch : challenges) {
+                        Challenge oldTrack = getChallengeByChallengeId(ch.challange_id);
+                        if (oldTrack != null) {
+                            ch.isChallengeRequestNoticed = oldTrack.isChallengeRequestNoticed;
+                            ch.isChallengeOver = oldTrack.isChallengeOver;
+                        }
+                        ch.isDeleted = false;
+
+                        dao.createOrUpdate(ch);
+                        Challenge o = getChallengeByChallengeId(ch.challange_id);
+                    }
+                    return null;
+                }
+            });
+        } catch (java.sql.SQLException e) {
+            throw new DefaultStepException("Update Challenges of User Database operation failed with error: " + e.getMessage());
+        }
+        deleteUnusedChallenge();
+    }
+
+    public void deleteUnusedChallenge() throws DefaultStepException {
+        try {
+            Dao<Challenge, ?> dao = getDao(Challenge.class);
+            List<Challenge> challengeList = getChallengeByUserId(Session.getAuthenticatedUserSocialId());
+
+            for (Challenge ch : challengeList) {
+                if (ch.isDeleted == true || ch.duration < System.currentTimeMillis()) {
+                    dao.delete(ch);
+                } else {
+                    ch.isDeleted = true;
+                    dao.update(ch);
+                }
+            }
+        } catch (java.sql.SQLException e) {
+            throw new DefaultStepException("Delete Challenges with error: " + e.getMessage());
+        }
+    }
+
+    public void deleteExpiredChallenge() throws DefaultStepException {
+        try {
+            Dao<Challenge, ?> dao = getDao(Challenge.class);
+            List<Challenge> challengeList = getChallengeByUserId(Session.getAuthenticatedUserSocialId());
+
+            for (Challenge ch : challengeList) {
+                if (ch.duration < System.currentTimeMillis()) {
+                    dao.delete(ch);
+                }
+            }
+        } catch (java.sql.SQLException e) {
+            throw new DefaultStepException("Delete Challenges with error: " + e.getMessage());
+        }
     }
 
     public List<Day> getDayList(String social_id) throws DefaultStepException {
@@ -267,6 +384,14 @@ public class DatabaseConnector extends OrmLiteSqliteOpenHelper {
             getDao(User.class).update(user);
         } catch (java.sql.SQLException e) {
             throw new DefaultStepException("UPDATE User Database operation failed");
+        }
+    }
+
+    public void updateChallenge(Challenge challenge) throws DefaultStepException {
+        try {
+            getDao(Challenge.class).update(challenge);
+        } catch (java.sql.SQLException e) {
+            throw new DefaultStepException("UPDATE Challenge Database operation failed");
         }
     }
 

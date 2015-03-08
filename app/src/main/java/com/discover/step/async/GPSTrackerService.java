@@ -15,10 +15,13 @@ import android.util.Log;
 
 import com.discover.step.R;
 import com.discover.step.Session;
+import com.discover.step.bl.ChallengeManager;
 import com.discover.step.bl.GPSHandlerManager;
 import com.discover.step.bl.LocationStoreProxy;
+import com.discover.step.bl.UserManager;
 import com.discover.step.interfaces.IGpsLoggerServiceClient;
 import com.discover.step.model.StepPoint;
+import com.discover.step.model.User;
 import com.discover.step.ui.MainActivity;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.model.LatLng;
@@ -193,7 +196,15 @@ public class GPSTrackerService extends Service {
                 Session.increaseStep();
 
                 //Insert step point into db using proxy.
-                LocationStoreProxy.getInstance().insertStepPoint(stepPoint);
+                //LocationStoreProxy.getInstance().insertStepPoint(stepPoint);
+                User user = UserManager.getInstance().getAuthenticatedUser();
+                if (user != null) {
+                    user.latitude = location.getLatitude();
+                    user.longitude = location.getLongitude();
+                    UserManager.getInstance().updateUser(user);
+                }
+
+                ChallengeManager.getInstance().checkGameState(location);
 
                 //Call client onNewStepPointsAvailable function.
                 if (isMainFormVisible()) {
@@ -214,7 +225,7 @@ public class GPSTrackerService extends Service {
      * @param location
      * @return
      */
-    private int distanceFromLastPoint(Location location) {
+    public int distanceFromLastPoint(Location location) {
         return (int) location.distanceTo(lastLocation);
     }
 

@@ -1,7 +1,13 @@
 package com.discover.step.async;
 
+import android.location.Location;
+import android.util.Log;
+
+import com.discover.step.Session;
 import com.discover.step.bc.ServerConnector;
 import com.discover.step.bl.AchievementManager;
+import com.discover.step.bl.ChallengeManager;
+import com.discover.step.bl.GPSHandlerManager;
 import com.discover.step.bl.StepManager;
 import com.discover.step.bl.UserManager;
 import com.discover.step.model.User;
@@ -23,6 +29,7 @@ public class SyncAllDataTask extends SafeAsyncTask<Void,Void,Void> {
         AchievementManager.getInstance().downloadBadges();
         AchievementManager.getInstance().downloadAchievements();
         StepManager.getInstance().downloadDayList();
+        ChallengeManager.getInstance().downloadChallengeByUserId(Session.getAuthenticatedUserSocialId());
 
         return null;
     }

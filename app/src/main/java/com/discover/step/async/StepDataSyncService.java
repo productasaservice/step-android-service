@@ -5,14 +5,18 @@ import android.app.IntentService;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.location.Location;
 import android.util.Log;
 
 import com.discover.step.Config;
 import com.discover.step.Session;
 import com.discover.step.bc.DatabaseConnector;
 import com.discover.step.bc.ServerConnector;
+import com.discover.step.bl.ChallengeManager;
+import com.discover.step.bl.GPSHandlerManager;
 import com.discover.step.bl.UserManager;
 import com.discover.step.ex.DefaultStepException;
+import com.discover.step.model.Challenge;
 import com.discover.step.model.Day;
 import com.discover.step.model.StepPoint;
 import com.discover.step.model.User;
@@ -35,6 +39,20 @@ public class StepDataSyncService extends IntentService {
     @Override
     protected synchronized void onHandleIntent(Intent intent) {
         mAlarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+
+        ChallengeManager.getInstance().downloadChallengeByUserId(Session.getAuthenticatedUserSocialId());
+        UserManager um = UserManager.getInstance();
+        User user = um.getAuthenticatedUser();
+        Location location = GPSHandlerManager.getInstance().getCurrentLocation();
+        if (user != null && location != null) {
+            user.latitude = location.getLatitude();
+            user.longitude = location.getLongitude();
+
+            um.updateUser(user);
+        }
+
+        Log.d("StepDataSyncService","Sync service is running");
+
 //        try {
 //            //Get all of un syced step points.
 ////            unSyncedStepPoints = DatabaseConnector.getInstance().getUnSyncedStepPoints(Session.authenticated_user_social_id);
@@ -55,7 +73,7 @@ public class StepDataSyncService extends IntentService {
 //            mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + Config.UPDATE_SERVER_DATA_SYNC_ALARM_TRIGGER_AT_MILLIS, getSyncPendingIntent(StepDataSyncService.this));
 //        }
 
-//        mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + Config.UPDATE_SERVER_DATA_SYNC_ALARM_TRIGGER_AT_MILLIS, getSyncPendingIntent(StepDataSyncService.this));
+        mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + Config.UPDATE_SERVER_DATA_SYNC_ALARM_TRIGGER_AT_MILLIS, getSyncPendingIntent(StepDataSyncService.this));
     }
 
     private PendingIntent getSyncPendingIntent(Context context) {

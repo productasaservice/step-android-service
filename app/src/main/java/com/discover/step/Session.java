@@ -32,4 +32,11 @@ public class Session {
         if (authenticated_user_social_id != null)
             PrefManager.getInstance().setUserStepCount(authenticated_user_social_id,step_count);
     }
+
+    public static String getAuthenticatedUserSocialId() {
+        if (user == null)
+            start();
+
+        return authenticated_user_social_id;
+    }
 }

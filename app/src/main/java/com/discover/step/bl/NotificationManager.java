@@ -5,6 +5,7 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.support.v4.app.NotificationCompat;
 
 import com.discover.step.R;
 import com.discover.step.StepApplication;
@@ -42,6 +43,19 @@ public class NotificationManager {
     private NotificationManager() {
         mContext = StepApplication.getContext();
         mAlarmManager = (AlarmManager) mContext.getSystemService(Context.ALARM_SERVICE);
+    }
+
+    public void showChallengeNotification(Challenge challenge, String message) {
+        Context context = StepApplication.getContext();
+
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
+                    .setSmallIcon(R.drawable.ic_launcher)
+                    .setTicker("End of " + challenge.title)
+                    .setContentTitle(challenge.title)
+                    .setContentText(message).setAutoCancel(true);
+
+            String id = challenge.challange_id.substring(0, 5);
+            mNotificationManager.notify((int) Integer.parseInt(id), builder.build());
     }
 
     public void showNotification(String hint, String description, int iconResId) {
@@ -104,4 +118,5 @@ public class NotificationManager {
         String id = challenge.challange_id.substring(0,5);
         mAlarmManager.cancel(PendingIntent.getBroadcast(mContext, Integer.parseInt(id), intent, PendingIntent.FLAG_UPDATE_CURRENT));
     }
+
 }

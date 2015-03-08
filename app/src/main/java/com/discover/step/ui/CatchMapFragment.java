@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +29,7 @@ import com.discover.step.R;
 import com.discover.step.Session;
 import com.discover.step.async.SafeAsyncTask;
 import com.discover.step.bl.AchievementManager;
+import com.discover.step.bl.ChallengeManager;
 import com.discover.step.bl.GPSHandlerManager;
 import com.discover.step.bl.LocationStoreProxy;
 import com.discover.step.bl.PrefManager;
@@ -59,7 +61,7 @@ import java.util.List;
 /**
  * Created by Geri on 2015.03.04..
  */
-public class CatchMapFragment extends Fragment implements IGpsLoggerServiceClient {
+public class CatchMapFragment extends Fragment implements IGpsLoggerServiceClient, ChallengeManager.OnChallengeSynced {
 
     public static final String TAG = "Catch Map Fragment";
 
@@ -166,6 +168,7 @@ public class CatchMapFragment extends Fragment implements IGpsLoggerServiceClien
 
                 //Add main marker.
                 addMainMarker();
+                updateChallengePoints();
 
                 mMapView.postDelayed(new Runnable() {
                     @Override
@@ -229,11 +232,50 @@ public class CatchMapFragment extends Fragment implements IGpsLoggerServiceClien
         mMap.clear();
         addMainMarker();
 
+        challengePoints = ChallengeManager.getInstance().getMyChallenges();
+
         for (Challenge challenge : challengePoints) {
-            mMap.addMarker(new MarkerOptions()
-                    .icon(new MarkerImageBuilder(mActivity.getResources()).asPrimary(false).withColor(challenge.color).withSize(10).build())
-                    .position(new LatLng(challenge.lat, challenge.lng)));
+            if (challenge.type == 1) {
+                if (!challenge.owner_id.equalsIgnoreCase(Session.getAuthenticatedUserSocialId())) {
+                    //If i have to find the game owner.
+                    addUserMarker(challenge.owner_id,challenge.color);
+                    String[] ops = new String[] {challenge.opoment_one_id,challenge.opoment_two_id, challenge.opoment_three_id};
+                    for (String id : ops) {
+                        if (!id.equalsIgnoreCase(Session.getAuthenticatedUserSocialId()))
+                            addUserMarker(id,getString(R.color.secondary_marker_color));
+                    }
+                } else {
+                    //If i'm the owner
+                    String[] ops = new String[] {challenge.opoment_one_id,challenge.opoment_two_id, challenge.opoment_three_id};
+                    for (String id : ops) {
+                        if (!id.equalsIgnoreCase("empty") && !id.equalsIgnoreCase(Session.getAuthenticatedUserSocialId()))
+                            addUserMarker(id,getString(R.color.secondary_marker_color));
+                    }
+                }
+            } else {
+                mMap.addMarker(new MarkerOptions()
+                        .icon(new MarkerImageBuilder(mActivity.getResources()).asPrimary(false).withColor(challenge.color).withSize(10).build())
+                        .position(new LatLng(challenge.lat, challenge.lng))
+                        .title(challenge.title)
+                        .snippet("Message: " + challenge.message));
+            }
         }
+    }
+
+    private void addUserMarker(String id, final String color) {
+        final User user = UserManager.getInstance().getUserBySocialId(id);
+
+        ImageLoader.getInstance().loadImage(user.picture_url,new SimpleImageLoadingListener() {
+            @Override
+            public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+                Bitmap bmp = BitmapHelper.getCenterChorpedRoundedBitmap(loadedImage, 36);
+
+                mMap.addMarker(new MarkerOptions()
+                        .icon(new MarkerImageBuilder(mActivity.getResources()).asPrimary(false).withColor(color).withProfileImage(bmp).withSize(20).build())
+                        .position(new LatLng(user.latitude, user.longitude))
+                        .title(user.first_name + " " + user.last_name));
+            }
+        });
     }
 
     @Override
@@ -359,6 +401,11 @@ public class CatchMapFragment extends Fragment implements IGpsLoggerServiceClien
                 }
             },1000);
         }
+    }
+
+    @Override
+    public void onSynced() {
+
     }
 
     public interface OnMarkersLoadedFinishListener {

@@ -15,6 +15,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import com.afollestad.materialdialogs.MaterialDialogCompat;
 import com.discover.step.R;
@@ -23,6 +24,7 @@ import com.discover.step.async.GPSTrackerService;
 import com.discover.step.async.StepDataSyncService;
 import com.discover.step.bc.DatabaseConnector;
 import com.discover.step.bc.ServerConnector;
+import com.discover.step.bl.ChallengeManager;
 import com.discover.step.bl.LocationStoreProxy;
 import com.discover.step.bl.StepManager;
 import com.discover.step.interfaces.IGpsLoggerServiceClient;
@@ -68,7 +70,31 @@ public class MainActivity extends SocialActivity {
             buildAlertMessageNoGps();
         }
 
+        Session.start();
         //FbHandlerV3.getInstance(this).sendChallenge();
+        ChallengeManager.getInstance().downloadChallengeByUserId(Session.authenticated_user_social_id);
+
+        //Handle of request.
+        //String request_id = "26211636724531788638";
+        String request_id = "";
+
+        if (!request_id.equalsIgnoreCase("")) {
+            ChallengeManager.getInstance().downloadChallengeByChallengeId(request_id,new ChallengeManager.OnReady<Challenge>() {
+                @Override
+                public void onReady(final Challenge data) {
+                    ChallengeDialog dialog = new ChallengeDialog(MainActivity.this, data);
+                    dialog.setOnAcceptButtonListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            ChallengeManager.getInstance().acceptChallenge(data.challange_id,null);
+                        }
+                    });
+
+                }
+            });
+        }
+
+        Log.d("test--","ts: " + System.currentTimeMillis() + (360000));
     }
 
     private void initActionBar() {

@@ -3,6 +3,8 @@ package com.discover.step.model;
 import android.graphics.Color;
 
 import com.discover.step.bl.UserManager;
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
 import com.parse.ParseObject;
 
 import java.io.Serializable;
@@ -11,21 +13,45 @@ import java.util.Random;
 /**
  * Created by Geri on 2015.03.02..
  */
+@DatabaseTable
 public class Challenge implements Serializable{
+    @DatabaseField(generatedId = true)
     public long id;
+    @DatabaseField
     public String title;
+    @DatabaseField
     public String challange_id;
+    @DatabaseField
     public String owner_id;
+    @DatabaseField
+    public String winner_id;
+    @DatabaseField
     public String color;
+    @DatabaseField
     public double lat = -1;
+    @DatabaseField
     public double lng = -1;
+    @DatabaseField
     public String opoment_one_id;
+    @DatabaseField
     public String opoment_two_id;
+    @DatabaseField
     public String opoment_three_id;
+    @DatabaseField
     public long duration;
+    @DatabaseField
     public int type; // 0 - catch me, 1 - catch place
+    @DatabaseField
     public String message;
+    @DatabaseField
     public String bet;
+    @DatabaseField
+    public boolean isChallengeRequestNoticed = false;
+    @DatabaseField
+    public boolean isChallengeOver = false;
+    @DatabaseField
+    public boolean isDeleted = true;
+
 
     public Challenge() {
         challange_id = generateId();
@@ -36,22 +62,25 @@ public class Challenge implements Serializable{
     public Challenge(ParseObject object){
         challange_id = object.getString("challange_id");
         owner_id = object.getString("owner_id");
+        winner_id = object.getString("winner_id");
         color = object.getString("color");
-        lat = Long.parseLong(object.getString("lat"));
-        lng = Long.parseLong(object.getString("lng"));
+        lat = Double.parseDouble(object.getString("lat"));
+        lng = Double.parseDouble(object.getString("lng"));
         opoment_one_id = object.getString("opoment_one_id");
         opoment_two_id = object.getString("opoment_two_id");
         opoment_three_id = object.getString("opoment_three_id");
         duration = object.getLong("duration");
         type = object.getInt("type");
-        message = object.getString("title");
+        title = object.getString("title");
         message = object.getString("message");
         bet = object.getString("bet");
+        isChallengeOver = winner_id.endsWith("empty") ? false : true;
     }
 
     public Challenge toChallange(ParseObject object) {
         challange_id = object.getString("challange_id");
         owner_id = object.getString("owner_id");
+        winner_id = object.getString("winner_id");
         color = object.getString("color");
         lat = Long.parseLong(object.getString("lat"));
         lng = Long.parseLong(object.getString("lng"));
@@ -60,9 +89,11 @@ public class Challenge implements Serializable{
         opoment_three_id = object.getString("opoment_three_id");
         duration = object.getLong("duration");
         type = object.getInt("type");
-        message = object.getString("title");
+        title = object.getString("title");
         message = object.getString("message");
         bet = object.getString("bet");
+        isChallengeOver = winner_id.endsWith("empty") ? false : true;
+
         return this;
     }
 
@@ -70,6 +101,7 @@ public class Challenge implements Serializable{
         ParseObject request = new ParseObject("Challange");
         request.put("challange_id",challange_id);
         request.put("owner_id",owner_id);
+        request.put("winner_id",winner_id == null ? "empty" : winner_id);
         request.put("color",color);
         request.put("lat",lat + "");
         request.put("lng",lng + "");

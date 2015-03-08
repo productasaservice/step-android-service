@@ -9,6 +9,7 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import com.discover.step.Config;
 import com.discover.step.R;
+import com.discover.step.bl.ChallengeManager;
 import com.discover.step.model.Challenge;
 
 /**
@@ -35,6 +36,8 @@ public class AlarmReceiver  extends BroadcastReceiver {
             Intent endIntent = new Intent(Config.CONST_CHALLENGE_HAS_ENDED);
             endIntent.putExtra("challenge",challenge);
             LocalBroadcastManager.getInstance(context).sendBroadcast(endIntent);
+
+            ChallengeManager.getInstance().deleteExpiredChallenge();
         }
     }
 }

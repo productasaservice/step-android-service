@@ -1,5 +1,6 @@
 package com.discover.step.util;
 
+import com.discover.step.model.Challenge;
 import com.discover.step.model.Day;
 import com.discover.step.model.StepPoint;
 import com.discover.step.model.User;
@@ -10,7 +11,7 @@ import com.j256.ormlite.android.apptools.OrmLiteConfigUtil;
  */
 public class DataBaseConfigUtil extends OrmLiteConfigUtil {
 
-    private static final Class<?>[] classes = new Class[] {StepPoint.class, User.class, Day.class
+    private static final Class<?>[] classes = new Class[] {StepPoint.class, User.class, Day.class, Challenge.class
     };
 
     /**

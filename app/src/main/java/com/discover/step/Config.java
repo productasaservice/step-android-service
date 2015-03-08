@@ -10,7 +10,7 @@ public class Config {
     public static final boolean IS_DEVELOPER_MODE = true;
 
     public static final String DB_NAME = "step_discover_db";
-    public static final int DB_VERSION = 2;
+    public static final int DB_VERSION = 3;
     public static final int SPLASH_TIME_OUT = 1000; //1 second.
     public static final long UPDATE_SERVER_DATA_SYNC_ALARM_TRIGGER_AT_MILLIS = 120000;
 
